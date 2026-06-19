@@ -593,7 +593,8 @@
         b("quran", "Given the Zabur (Psalms), taught the working of iron, made a just ruler; slew Jalut as a youth.", "Q 21:78–80, Q 34:10–11, Q 2:251"),
         b("biblical", "David, shepherd-king, psalmist, who defeated Goliath.", "1 Samuel 16–17")
       ],
-      relations: [ r("sulayman", "parent"), r("jalut", "opponent"), r("talut", "ally") ]
+      relations: [ r("sulayman", "parent"), r("jalut", "opponent"), r("talut", "ally"),
+                   r("bani-israel", "ruler", "king of Bani Israel") ]
     },
     {
       id: "sulayman", name: "Sulayman", title: "The King Who Spoke to Birds (Solomon)",
@@ -662,7 +663,8 @@
       entries: [
         b("quran", "The family of Imran is named and honoured; a whole surah bears their name (Aal Imran).", "Q 3:33–37")
       ],
-      relations: [ r("maryam", "parent"), r("imran-wife", "spouse") ]
+      relations: [ r("maryam", "parent"), r("imran-wife", "spouse"),
+                   r("bani-israel", "descendant", "the house of Imran, of Bani Israel") ]
     },
     {
       id: "imran-wife", name: "Wife of Imran", title: "The Mother Who Vowed",
@@ -702,7 +704,8 @@
         b("quran", "Born of Maryam by God's command; healed the blind and the leper and revived the dead by God's leave; raised by God rather than crucified.", "Q 3:45–55, Q 5:110, Q 4:157–158"),
         b("biblical", "Jesus of Nazareth, his ministry, miracles, and passion.", "The Gospels")
       ],
-      relations: [ r("maryam", "child"), r("hawariyyun", "teacher"), r("yahya", "kin") ]
+      relations: [ r("maryam", "child"), r("hawariyyun", "teacher"), r("yahya", "kin"),
+                   r("ibrahim", "descendant", "among Ibrahim's progeny (Q 6:85)") ]
     },
     {
       id: "hawariyyun", name: "Al-Hawariyyun", title: "The Disciples",
@@ -755,7 +758,7 @@
         b("quran", "Afflicted by loss and illness, he called upon God and was restored, a model of patient endurance.", "Q 21:83–84, Q 38:41–44"),
         b("biblical", "Job, tested in all things, who held to his integrity.", "Book of Job")
       ],
-      relations: []
+      relations: [ r("ibrahim", "descendant", "among Ibrahim's progeny (Q 6:84)") ]
     },
     {
       id: "yunus", name: "Yunus", title: "The Man of the Fish (Jonah)",
@@ -769,7 +772,7 @@
         b("quran", "Left his people in anger, was swallowed by the great fish, prayed in the darkness, and was delivered; his city believed and was spared.", "Q 21:87–88, Q 37:139–148, Q 10:98"),
         b("biblical", "Jonah and the great fish; the repentance of Nineveh.", "Book of Jonah")
       ],
-      relations: []
+      relations: [ r("ibrahim", "kin", "named among the guided (Q 6:86)") ]
     },
     {
       id: "hud", name: "Hud", title: "The Prophet of Ad",
@@ -781,7 +784,7 @@
       entries: [
         b("quran", "Sent to the people of Ad, who built lofty monuments and grew arrogant; they rejected him and were destroyed by a furious wind.", "Q 7:65–72, Q 11:50–60")
       ],
-      relations: [ r("ad", "kin") ]
+      relations: [ r("ad", "kin"), r("nuh", "descendant", "of the generations after Nuh") ]
     },
     {
       id: "salih", name: "Salih", title: "The Prophet of the She-Camel",
@@ -793,7 +796,7 @@
       entries: [
         b("quran", "Sent to Thamud, who carved homes in the mountains; they killed the divinely sent she-camel and were seized by a mighty blast.", "Q 7:73–79, Q 11:61–68")
       ],
-      relations: [ r("thamud", "kin") ]
+      relations: [ r("thamud", "kin"), r("nuh", "descendant", "of the generations after Nuh") ]
     },
     {
       id: "luqman", name: "Luqman", title: "The Wise",
@@ -806,7 +809,7 @@
       entries: [
         b("quran", "Granted wisdom; his tender, sustained advice to his son is preserved in the surah bearing his name.", "Q 31:12–19")
       ],
-      relations: []
+      relations: [ r("dawud", "contemporary", "tradition: lived in the time of Dawud") ]
     },
     {
       id: "dhul-qarnayn", name: "Dhul-Qarnayn", title: "The Two-Horned Traveller",
@@ -819,7 +822,7 @@
       entries: [
         b("quran", "A righteous ruler who travelled to the rising and setting of the sun and built a great barrier of iron and copper.", "Q 18:83–98")
       ],
-      relations: []
+      relations: [ r("ibrahim", "contemporary", "tradition associates him with Ibrahim's era") ]
     },
     {
       id: "ashab-kahf", name: "Ashab al-Kahf", title: "The Companions of the Cave",
@@ -832,7 +835,7 @@
       entries: [
         b("quran", "Youths who took refuge in a cave from persecution; God caused them to sleep for many years as a sign of resurrection.", "Q 18:9–26")
       ],
-      relations: []
+      relations: [ r("isa", "successor", "monotheists in the generations after Isa") ]
     },
     {
       id: "ad", name: "The People of Ad", title: "The Pillared Nation",
@@ -872,7 +875,8 @@
         b("quran", "The Messenger to whom the Quran was revealed; named four times, called a mercy to the worlds and the seal of the prophets.", "Q 33:40, Q 48:29, Q 21:107"),
         b("historical", "Born in Mecca c. 570 CE; the sira records his life, mission, and the early Muslim community.", "Ibn Ishaq, Sira")
       ],
-      relations: [ r("ismail", "descendant"), r("ibrahim", "descendant"), r("zayd", "teacher"), r("abu-lahab", "opponent") ]
+      relations: [ r("ismail", "descendant"), r("ibrahim", "descendant"), r("zayd", "teacher"),
+                   r("abu-lahab", "opponent"), r("isa", "successor", "came after Isa, who foretold him (Q 61:6)") ]
     },
     {
       id: "zayd", name: "Zayd ibn Harithah", title: "The Beloved Companion",

@@ -209,6 +209,41 @@ body {
 }
 .banner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* Path-finder result panel */
+.path-panel {
+  position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(20px);
+  max-width: min(92%, 720px); z-index: 7;
+  background: rgba(20,21,28,0.93); backdrop-filter: blur(8px);
+  border: 1px solid var(--gold); border-radius: 14px;
+  padding: 14px 18px 14px; box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
+}
+.path-panel.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.path-close {
+  position: absolute; top: 8px; right: 10px;
+  background: transparent; border: none; color: var(--ink-dim);
+  font-size: 18px; cursor: pointer; line-height: 1;
+}
+.path-close:hover { color: var(--gold); }
+.path-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--gold); margin-bottom: 10px;
+}
+.path-chain {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+}
+.path-node {
+  font-family: var(--serif); font-size: 14px; color: var(--ink);
+  background: rgba(201,145,33,0.12); border: 1px solid rgba(201,145,33,0.45);
+  border-radius: 8px; padding: 5px 11px; cursor: pointer; transition: all 0.13s;
+}
+.path-node:hover { background: rgba(201,145,33,0.24); border-color: var(--gold); }
+.path-rel {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--ink-faint); position: relative; padding: 0 4px;
+}
+.path-rel::before { content: "→ "; color: var(--gold-soft); }
+
 .tooltip {
   position: absolute; z-index: 8; pointer-events: none;
   background: rgba(18,19,26,0.95); border: 1px solid var(--gold);

@@ -41,7 +41,11 @@
     activeArchetypes: {},     // id -> true (empty = all)
     activeLayers: {},         // id -> true (empty = all)
     search: "",
-    selected: null
+    selected: null,
+    pathMode: false,          // awaiting path endpoint clicks
+    pathStart: null,
+    activePath: null,         // the currently highlighted path (for engine swaps)
+    constellations: true
   };
 
   /* ---- Build graph node/edge spec from people ---- */
@@ -49,7 +53,7 @@
     var nodes = DATA.people.map(function (p) {
       var degree = (p.relations || []).length;
       return {
-        id: p.id, name: p.name, named: p.named,
+        id: p.id, name: p.name, named: p.named, group: p.group,
         color: colorFor(p),
         r: 8 + Math.min(7, degree * 0.8) + (p.isCommunity ? 1 : 0)
       };
@@ -288,11 +292,125 @@
   function select(id, focus) {
     var p = personById[id];
     if (!p) return;
+    if (state.pathMode) { pathPick(id); }
     state.selected = id;
     graph.setSelected(id);
     if (focus) graph.focusNode(id);
     renderDetail(p);
     renderPeopleList();
+  }
+
+  /* ---- Path finding between two people ---- */
+  var _adj = null;
+  function adjacency() {
+    if (_adj) return _adj;
+    _adj = {};
+    function link(a, b) { (_adj[a] = _adj[a] || []).push(b); }
+    DATA.people.forEach(function (p) {
+      (p.relations || []).forEach(function (r) {
+        if (!personById[r.to]) return;
+        link(p.id, r.to); link(r.to, p.id);
+      });
+    });
+    return _adj;
+  }
+
+  function shortestPath(a, b) {
+    if (a === b) return [a];
+    var adj = adjacency();
+    var prev = {}, seen = {}; prev[a] = null; seen[a] = true;
+    var queue = [a];
+    while (queue.length) {
+      var cur = queue.shift();
+      var nbrs = adj[cur] || [];
+      for (var i = 0; i < nbrs.length; i++) {
+        var nx = nbrs[i];
+        if (seen[nx]) continue;
+        seen[nx] = true; prev[nx] = cur;
+        if (nx === b) {
+          var chain = [b];
+          while (prev[chain[0]] != null) chain.unshift(prev[chain[0]]);
+          return chain;
+        }
+        queue.push(nx);
+      }
+    }
+    return null;
+  }
+
+  // How a step a -> b reads, honouring direction where possible.
+  var INVERSE = {
+    parent: "child", child: "parent", ancestor: "descendant", descendant: "ancestor",
+    teacher: "student", student: "teacher", ruler: "servant", servant: "ruler",
+    successor: "predecessor"
+  };
+  function relLabel(a, b) {
+    var pa = personById[a], pb = personById[b];
+    var rel = (pa.relations || []).filter(function (r) { return r.to === b; })[0];
+    if (rel) return DATA.relationTypes[rel.type] || rel.type;
+    rel = (pb.relations || []).filter(function (r) { return r.to === a; })[0];
+    if (rel) {
+      var inv = INVERSE[rel.type] || rel.type;
+      return DATA.relationTypes[inv] || inv;
+    }
+    return "connected to";
+  }
+
+  function enterPathMode() {
+    clearPath(true);                 // clear any existing path first…
+    state.pathMode = true;           // …then arm path-picking
+    state.pathStart = null;
+    var btn = document.getElementById("path-btn");
+    if (btn) btn.classList.add("active");
+    flashBanner("Path-finder: click the first person");
+  }
+
+  function pathPick(id) {
+    if (!state.pathStart) {
+      state.pathStart = id;
+      flashBanner("From " + personById[id].name + " — now click a second person");
+      return;
+    }
+    var path = shortestPath(state.pathStart, id);
+    state.pathMode = false;
+    var btn = document.getElementById("path-btn");
+    if (btn) btn.classList.remove("active");
+    if (!path) { flashBanner("No connection found"); state.pathStart = null; return; }
+    showPath(path);
+    state.pathStart = null;
+  }
+
+  function showPath(path) {
+    state.activePath = path;
+    graph.setPath(path);
+    if (graph.setAutoRotate) graph.setAutoRotate(false);
+    var panel = document.getElementById("path-panel");
+    var html = '<button class="path-close" aria-label="Close">×</button>' +
+      '<div class="path-title">A path through the universe · ' + (path.length - 1) + ' step' + (path.length - 1 === 1 ? '' : 's') + '</div>' +
+      '<div class="path-chain">';
+    path.forEach(function (id, i) {
+      if (i > 0) {
+        html += '<span class="path-rel">' + relLabel(path[i - 1], id) + '</span>';
+      }
+      html += '<button class="path-node" data-id="' + id + '">' + personById[id].name + '</button>';
+    });
+    html += '</div>';
+    panel.innerHTML = html;
+    panel.classList.add("show");
+    panel.querySelector(".path-close").onclick = function () { clearPath(); };
+    Array.prototype.forEach.call(panel.querySelectorAll(".path-node"), function (b) {
+      b.onclick = function () { select(b.getAttribute("data-id"), true); };
+    });
+  }
+
+  function clearPath(silent) {
+    state.pathMode = false; state.pathStart = null; state.activePath = null;
+    if (graph && graph.setPath) graph.setPath(null);
+    var panel = document.getElementById("path-panel");
+    if (panel) { panel.classList.remove("show"); panel.innerHTML = ""; }
+    var btn = document.getElementById("path-btn");
+    if (btn) btn.classList.remove("active");
+    if (!silent) flashBanner("Path cleared");
   }
 
   function applyFilters(opts) {
@@ -358,6 +476,8 @@
     }
     applyFilters();                       // pushes current node/edge state
     if (state.selected) graph.setSelected(state.selected);
+    if (state.activePath && graph.setPath) graph.setPath(state.activePath);
+    if (graph.setConstellations) graph.setConstellations(state.constellations);
     setTimeout(function () { graph.center(); }, 60);
   }
 
@@ -370,6 +490,8 @@
     if (btn) btn.textContent = mode === "3d" ? "◳ 2D view" : "✦ 3D view";
     var rot = document.getElementById("rotate-btn");
     if (rot) rot.style.display = mode === "3d" ? "" : "none";
+    var lbl = document.getElementById("labels-btn");
+    if (lbl) lbl.style.display = mode === "3d" ? "" : "none";
     flashBanner(mode === "3d" ? "3D universe" : "2D canvas");
   }
 
@@ -389,6 +511,7 @@
     document.getElementById("reset-btn").onclick = function () {
       state.activeArchetypes = {}; state.activeLayers = {}; state.search = "";
       state.selected = null;
+      clearPath(true);
       document.getElementById("search").value = "";
       graph.setSelected(null);
       renderDetail(null);
@@ -412,6 +535,24 @@
       rotateBtn.textContent = rotateBtn._on ? "⟳ Rotating" : "⏸ Paused";
     };
     if (rotateBtn) { rotateBtn._on = true; rotateBtn.classList.add("active"); }
+
+    var pathBtn = document.getElementById("path-btn");
+    if (pathBtn) pathBtn.onclick = function () {
+      if (state.pathMode) { clearPath(); }
+      else if (state.activePath) { clearPath(); }
+      else { enterPathMode(); }
+    };
+
+    var labelsBtn = document.getElementById("labels-btn");
+    if (labelsBtn) {
+      labelsBtn.classList.add("active");
+      labelsBtn.onclick = function () {
+        state.constellations = !state.constellations;
+        if (graph.setConstellations) graph.setConstellations(state.constellations);
+        labelsBtn.classList.toggle("active", state.constellations);
+        labelsBtn.textContent = state.constellations ? "✶ Families" : "✶ Hidden";
+      };
+    }
 
     // Tabs (Index / Stories)
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (tab) {

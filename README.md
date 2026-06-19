@@ -29,6 +29,18 @@ and identities, not only names.**
   **geometric seal** — a star-rosette in the visual language of Islamic art,
   coloured by archetype — paired with the **calligraphy of their name**. No
   faces, no portraits, no image assets; it scales to unlimited people.
+- **Read each seal's story motif** — at the heart of every seal sits a small
+  symbolic glyph evoking that person's narrative: an ark for Nuh, a staff for
+  Musa, a well for Yusuf, a palm for Maryam, a lamp of light for the final
+  Messenger. Symbolic and aniconic — never a figure.
+- **Trace a path between any two people** — "Find a path", click two people, and
+  the universe dims to reveal the shortest chain of relationships connecting
+  them, step by step (e.g. *Queen of Sheba → Sulayman → Dawud → Bani Israel →
+  Yaqub → Ibrahim → Nuh → Adam → Habil*). The graph is fully connected, so a
+  path always exists.
+- **Find your way by constellations** — faint family names ("IBRAHIM'S FAMILY",
+  "HOUSE OF YAQUB"…) float over each cluster in 3D so the world stays legible as
+  you orbit.
 - **Move through the network** — open anyone and jump to their connections:
   `Adam → Hawwa → Habil → Qabil`, `Ibrahim → Hajar → Ismail → Muhammad`,
   `Musa → Pharaoh → Haman → Asiya → Bani Israel`, `Maryam → Isa → Hawariyyun`.

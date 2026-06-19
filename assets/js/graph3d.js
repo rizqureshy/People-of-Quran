@@ -49,6 +49,9 @@
 
     this.hoverId = null;
     this.selectedId = null;
+    this.pathNodes = null;       // {id:true} when a path is highlighted
+    this.pathEdges = null;       // {"a|b":true}
+    this.showConstellations = true;
     this.alpha = 1;
     this.dpr = window.devicePixelRatio || 1;
 
@@ -106,6 +109,21 @@
   };
 
   PQGraph3D.prototype.setSelected = function (id) { this.selectedId = id; };
+
+  function edgeKey(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
+
+  /* Highlight a path: an ordered list of node ids. Pass null to clear. */
+  PQGraph3D.prototype.setPath = function (nodeIds) {
+    if (!nodeIds || !nodeIds.length) { this.pathNodes = null; this.pathEdges = null; return; }
+    this.pathNodes = {}; this.pathEdges = {};
+    for (var i = 0; i < nodeIds.length; i++) {
+      this.pathNodes[nodeIds[i]] = true;
+      if (i > 0) this.pathEdges[edgeKey(nodeIds[i - 1], nodeIds[i])] = true;
+    }
+    this.autoRotate = false;
+  };
+
+  PQGraph3D.prototype.setConstellations = function (on) { this.showConstellations = on; };
 
   PQGraph3D.prototype.center = function () {
     // Frame the whole cloud and stop auto-rotate briefly.
@@ -245,6 +263,7 @@
     ctx.globalAlpha = 1;
 
     var self = this;
+    var pathOn = !!this.pathNodes;
     var active = this.hoverId || this.selectedId;
     var neighbors = {};
     if (active) {
@@ -255,18 +274,24 @@
       });
     }
 
+    // Constellation labels — faint family names floating over each cluster.
+    if (this.showConstellations && !pathOn) this._drawConstellations(cam);
+
     // Edges (projected, depth-faded)
     for (var k = 0; k < this.edges.length; k++) {
       var e = this.edges[k];
       var s1 = this.nodeById[e.source], s2 = this.nodeById[e.target];
       var p1 = this._project(s1, cam), p2 = this._project(s2, cam);
       if (!p1 || !p2) continue;
-      var lit = active && (e.source === active || e.target === active);
       var depthFade = Math.min(1, 900 / ((p1.depth + p2.depth) / 2));
+      var onPath = pathOn && this.pathEdges[edgeKey(e.source, e.target)];
+      var lit = active && (e.source === active || e.target === active);
       ctx.beginPath();
       ctx.moveTo(p1.sx, p1.sy);
       ctx.lineTo(p2.sx, p2.sy);
-      if (lit) { ctx.strokeStyle = "rgba(216,168,56," + (0.85 * depthFade) + ")"; ctx.lineWidth = 1.6; }
+      if (onPath) { ctx.strokeStyle = "rgba(232,180,72," + (0.95 * depthFade) + ")"; ctx.lineWidth = 2.4; }
+      else if (pathOn) { ctx.strokeStyle = "rgba(150,160,200," + (0.04 * depthFade) + ")"; ctx.lineWidth = 0.5; }
+      else if (lit) { ctx.strokeStyle = "rgba(216,168,56," + (0.85 * depthFade) + ")"; ctx.lineWidth = 1.6; }
       else if (active) { ctx.strokeStyle = "rgba(150,160,200," + (0.05 * depthFade) + ")"; ctx.lineWidth = 0.6; }
       else { ctx.strokeStyle = "rgba(150,165,210," + (0.14 * depthFade) + ")"; ctx.lineWidth = 0.7; }
       ctx.stroke();
@@ -285,8 +310,9 @@
 
     for (var di = 0; di < drawList.length; di++) {
       var node = drawList[di].n, proj = drawList[di].p;
-      var dim = (active && !neighbors[node.id]) || node.dim;
-      var isSel = node.id === this.selectedId;
+      var onPath = pathOn && this.pathNodes[node.id];
+      var dim = pathOn ? !onPath : ((active && !neighbors[node.id]) || node.dim);
+      var isSel = node.id === this.selectedId || onPath;
       var isHover = node.id === this.hoverId;
       var rad = node.r * proj.scale * (isSel ? 1.5 : isHover ? 1.28 : 1);
       rad = Math.max(3, Math.min(rad, 80));
@@ -327,6 +353,37 @@
         ctx.globalAlpha = 1;
       }
     }
+  };
+
+  /* Faint family-cluster labels, drawn behind the nodes. */
+  PQGraph3D.prototype._drawConstellations = function (cam) {
+    var groups = {};
+    for (var i = 0; i < this.nodes.length; i++) {
+      var n = this.nodes[i];
+      if (!n.group || n.dim) continue;
+      var g = groups[n.group] || (groups[n.group] = { sx: 0, sy: 0, sz: 0, c: 0 });
+      g.sx += n.x; g.sy += n.y; g.sz += n.z; g.c++;
+    }
+    var ctx = this.ctx;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (var name in groups) {
+      var gr = groups[name];
+      if (gr.c < 2) continue;
+      var c = v(gr.sx / gr.c, gr.sy / gr.c, gr.sz / gr.c);
+      var pr = this._project(c, cam);
+      if (!pr) continue;
+      var alpha = Math.min(0.5, Math.max(0.08, 700 / pr.depth * 0.5));
+      var fs = Math.max(11, Math.min(22, 17 * pr.scale));
+      ctx.font = "600 " + fs + "px 'Iowan Old Style', 'Palatino Linotype', Georgia, serif";
+      ctx.fillStyle = "rgba(216,178,90," + alpha + ")";
+      // letter-spaced, uppercased family name
+      var label = name.toUpperCase();
+      var spaced = label.split("").join(" ");
+      ctx.fillText(spaced, pr.sx, pr.sy);
+    }
+    ctx.restore();
   };
 
   /* ---- Hit testing against the last rendered frame ---- */

@@ -163,6 +163,7 @@
     ctx.scale(this.scale, this.scale);
 
     var self = this;
+    var pathOn = !!this.pathNodes;
     var active = this.hoverId || this.selectedId;
     var neighbors = {};
     if (active) {
@@ -172,23 +173,30 @@
         if (e.target === active) neighbors[e.source] = true;
       });
     }
+    function ek(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
 
     // Edges
     this.edges.forEach(function (e) {
       var s = self.nodeById[e.source], t = self.nodeById[e.target];
+      var onPath = pathOn && self.pathEdges[ek(e.source, e.target)];
       var lit = active && (e.source === active || e.target === active);
       ctx.beginPath();
       ctx.moveTo(s.x, s.y);
       ctx.lineTo(t.x, t.y);
-      ctx.strokeStyle = lit ? "rgba(201,145,33,0.75)" : (active ? "rgba(120,120,140,0.06)" : "rgba(140,140,160,0.16)");
-      ctx.lineWidth = (lit ? 1.6 : 0.7) / self.scale;
+      if (onPath) { ctx.strokeStyle = "rgba(232,180,72,0.95)"; ctx.lineWidth = 2.6 / self.scale; }
+      else if (pathOn) { ctx.strokeStyle = "rgba(120,120,140,0.05)"; ctx.lineWidth = 0.6 / self.scale; }
+      else {
+        ctx.strokeStyle = lit ? "rgba(201,145,33,0.75)" : (active ? "rgba(120,120,140,0.06)" : "rgba(140,140,160,0.16)");
+        ctx.lineWidth = (lit ? 1.6 : 0.7) / self.scale;
+      }
       ctx.stroke();
     });
 
     // Nodes
     this.nodes.forEach(function (nn) {
-      var dim = active && !neighbors[nn.id];
-      var isSel = nn.id === self.selectedId;
+      var onPath = pathOn && self.pathNodes[nn.id];
+      var dim = pathOn ? !onPath : (active && !neighbors[nn.id]);
+      var isSel = nn.id === self.selectedId || onPath;
       var isHover = nn.id === self.hoverId;
       var r = nn.r * (isSel ? 1.5 : isHover ? 1.3 : 1);
 
@@ -353,6 +361,19 @@
   };
 
   PQGraph.prototype.stop = function () { this._running = false; };
+
+  PQGraph.prototype.setPath = function (nodeIds) {
+    if (!nodeIds || !nodeIds.length) { this.pathNodes = null; this.pathEdges = null; return; }
+    this.pathNodes = {}; this.pathEdges = {};
+    for (var i = 0; i < nodeIds.length; i++) {
+      this.pathNodes[nodeIds[i]] = true;
+      if (i > 0) {
+        var a = nodeIds[i - 1], b = nodeIds[i];
+        this.pathEdges[(a < b ? a + "|" + b : b + "|" + a)] = true;
+      }
+    }
+  };
+  PQGraph.prototype.setConstellations = function () {}; // n/a in 2D
 
   window.PQGraph = PQGraph;
 })();
