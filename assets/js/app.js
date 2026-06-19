@@ -466,9 +466,23 @@
     };
     if (mode === "3d") {
       opts.personById = personById;
-      opts.getSprite = function (id) {
+      // Draw each seal live onto the scene. Level-of-detail keeps it fast:
+      // tiny/distant nodes get a cheap glowing orb, larger ones the full seal.
+      opts.drawNode = function (ctx, id, sx, sy, radius) {
         var p = personById[id];
-        return p && window.PQDepict ? window.PQDepict.sprite(p, 128) : null;
+        if (!p || !window.PQDepict) return;
+        if (radius < 8) {
+          var c = window.PQDepict.colorFor(p);
+          var gg = ctx.createRadialGradient(sx, sy, 0.5, sx, sy, radius * 1.7);
+          gg.addColorStop(0, c);
+          gg.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = gg;
+          ctx.beginPath(); ctx.arc(sx, sy, radius * 1.7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(sx, sy, radius * 0.62, 0, Math.PI * 2);
+          ctx.fillStyle = c; ctx.fill();
+        } else {
+          window.PQDepict.drawSeal(ctx, sx, sy, radius, p, { glow: true });
+        }
       };
       graph = new PQGraph3D(canvas, opts);
     } else {

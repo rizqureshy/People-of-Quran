@@ -32,6 +32,7 @@
     this.onSelect = options.onSelect || function () {};
     this.onHover = options.onHover || function () {};
     this.getSprite = options.getSprite || null;
+    this.drawNode = options.drawNode || null;
     this.personById = options.personById || {};
 
     this.nodes = [];
@@ -231,9 +232,13 @@
 
   PQGraph3D.prototype._tick = function () {
     if (!this._running) return;
-    this._simulate();
-    this._draw();
-    requestAnimationFrame(this._tick);
+    try {
+      this._simulate();
+      this._draw();
+    } catch (err) {
+      if (!this._loggedErr) { this._loggedErr = true; if (window.console) console.error("PQGraph3D draw error:", err); }
+    }
+    requestAnimationFrame(this._tick);   // never stop the loop
   };
 
   PQGraph3D.prototype._draw = function () {
@@ -318,24 +323,32 @@
       rad = Math.max(3, Math.min(rad, 80));
       this._screen[node.id] = { sx: proj.sx, sy: proj.sy, r: rad, depth: proj.depth };
 
-      ctx.globalAlpha = dim ? 0.18 : Math.min(1, 1500 / proj.depth);
+      ctx.globalAlpha = dim ? 0.2 : Math.min(1, Math.max(0.55, 1500 / proj.depth));
 
-      var sprite = this.getSprite ? this.getSprite(node.id) : null;
-      if (sprite) {
-        var size = rad * 2.4;
-        if (isSel) {
-          ctx.save();
-          ctx.shadowColor = "rgba(216,168,56,0.9)";
-          ctx.shadowBlur = 24;
+      if (isSel) { ctx.save(); ctx.shadowColor = "rgba(216,168,56,0.9)"; ctx.shadowBlur = 26; }
+      try {
+        if (this.drawNode) {
+          // Draw the seal live, directly onto the scene.
+          this.drawNode(ctx, node.id, proj.sx, proj.sy, rad);
+        } else if (this.getSprite && this.getSprite(node.id)) {
+          var sprite = this.getSprite(node.id);
+          var size = rad * 2.4;
+          ctx.drawImage(sprite, proj.sx - size / 2, proj.sy - size / 2, size, size);
+        } else {
+          // Last-resort glowing orb so a node is always visible.
+          var gg = ctx.createRadialGradient(proj.sx, proj.sy, 1, proj.sx, proj.sy, rad * 1.6);
+          gg.addColorStop(0, node.color || "#9aa6c0");
+          gg.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = gg;
+          ctx.beginPath(); ctx.arc(proj.sx, proj.sy, rad * 1.6, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(proj.sx, proj.sy, rad, 0, Math.PI * 2);
+          ctx.fillStyle = node.color || "#9aa6c0"; ctx.fill();
         }
-        ctx.drawImage(sprite, proj.sx - size / 2, proj.sy - size / 2, size, size);
-        if (isSel) ctx.restore();
-      } else {
-        ctx.beginPath();
-        ctx.arc(proj.sx, proj.sy, rad, 0, Math.PI * 2);
-        ctx.fillStyle = node.color || "#8d99ae";
-        ctx.fill();
+      } catch (err) {
+        ctx.beginPath(); ctx.arc(proj.sx, proj.sy, rad, 0, Math.PI * 2);
+        ctx.fillStyle = node.color || "#9aa6c0"; ctx.fill();
       }
+      if (isSel) ctx.restore();
       ctx.globalAlpha = 1;
 
       // Labels for near / active nodes
