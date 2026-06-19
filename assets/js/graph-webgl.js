@@ -164,6 +164,11 @@ class PQGraphGL {
 
     this._clock = new THREE.Clock();
     this._loop = this._loop.bind(this);
+
+    // Probe render: surfaces any WebGL/driver failure synchronously so the
+    // caller can fall back to the canvas engine instead of showing black.
+    this.composer.render();
+
     requestAnimationFrame(this._loop);
   }
 

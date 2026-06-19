@@ -501,9 +501,16 @@
   }
 
   /* ---- Hero overlay ---- */
+  var heroHidden = false;
   function hideHero() {
+    if (heroHidden) return;
+    heroHidden = true;
     var hero = document.getElementById("hero");
-    if (hero) hero.classList.add("hide");
+    if (hero) {
+      hero.classList.add("hide");
+      // Fully remove it from the hit-testing path once faded.
+      setTimeout(function () { hero.style.display = "none"; }, 1200);
+    }
   }
 
   var bannerTimer;
@@ -635,26 +642,35 @@
   }
 
   var glEngine = null;   // the WebGL engine persists (one GL context)
+  var glFailed = false;  // WebGL/Three.js unavailable or errored -> use canvas
 
   function buildEngine() {
     var opts = {
       onSelect: function (id) { select(id, false); },
       onHover: onHover
     };
-    if (mode === "3d" && window.PQGraphGL) {
+    var useGL = mode === "3d" && window.PQGraphGL && !glFailed;
+    if (useGL) {
       // Full WebGL universe with real bloom (Three.js). Built once, reused.
-      showCanvas("gl");
-      if (!glEngine) {
-        opts.personById = personById; opts.depict = window.PQDepict;
-        glEngine = new window.PQGraphGL(document.getElementById("canvas-gl"), opts);
-      } else { glEngine.resume(); }
-      graph = glEngine;
-    } else if (mode === "3d") {
+      try {
+        showCanvas("gl");
+        if (!glEngine) {
+          opts.personById = personById; opts.depict = window.PQDepict;
+          glEngine = new window.PQGraphGL(document.getElementById("canvas-gl"), opts);
+        } else { glEngine.resume(); }
+        graph = glEngine;
+      } catch (err) {
+        if (window.console) console.error("WebGL engine failed — falling back to canvas:", err);
+        glFailed = true; glEngine = null; useGL = false;
+        flashBanner("WebGL unavailable — using canvas mode");
+      }
+    }
+    if (!useGL && mode === "3d") {
       // Fallback: dependency-free canvas 3D, people as cards.
       showCanvas("2d");
       opts.personById = personById; opts.drawNode = drawPersonCard;
       graph = new PQGraph3D(document.getElementById("canvas"), opts);
-    } else {
+    } else if (!useGL) {
       showCanvas("2d");
       graph = new PQGraph(document.getElementById("canvas"), opts);
     }
@@ -766,11 +782,12 @@
       DATA.people.filter(function (p) { return !p.named; }).length;
     document.getElementById("stat-stories").textContent = DATA.stories.length;
 
-    // Hero overlay + cinematic intro
+    // Hero overlay + cinematic intro. Clicking anywhere on the hero enters.
+    function enterUniverse() { hideHero(); if (graph && graph.skipIntro) graph.skipIntro(); }
+    var heroEl = document.getElementById("hero");
+    if (heroEl) heroEl.addEventListener("click", enterUniverse);
     var heroEnter = document.getElementById("hero-enter");
-    if (heroEnter) heroEnter.onclick = function () { hideHero(); if (graph.skipIntro) graph.skipIntro(); };
-    var canvasEl = document.getElementById("canvas");
-    if (canvasEl) canvasEl.addEventListener("pointerdown", hideHero, { once: true });
+    if (heroEnter) heroEnter.onclick = function (e) { if (e && e.stopPropagation) e.stopPropagation(); enterUniverse(); };
 
     // Restore a shared view from the URL, otherwise play the intro.
     var restored = applyHash();
