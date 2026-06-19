@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>People of the Quran — A Living Canvas</title>
+  <meta name="description" content="A living, interconnected knowledge universe of every human being mentioned, referenced, implied, or connected to the Quran." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <button id="sidebar-toggle" class="icon-btn only-mobile" aria-label="Toggle menu">☰</button>
+      <div class="brand-mark">۞</div>
+      <div class="brand-text">
+        <h1>People of the Quran</h1>
+        <p>A living canvas of human stories</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span id="stat-people">0</span><label>people</label></div>
+      <div class="stat"><span id="stat-unnamed">0</span><label>unnamed</label></div>
+      <div class="stat"><span id="stat-stories">0</span><label>stories</label></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Left sidebar: filters, index, stories -->
+    <aside class="sidebar" id="sidebar">
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="Search people, names, families…" autocomplete="off" />
+      </div>
+
+      <section class="filter-block">
+        <h2 class="block-title">Archetypes</h2>
+        <p class="block-note">Recurring human patterns across revelation.</p>
+        <div id="archetype-list" class="chip-list"></div>
+      </section>
+
+      <section class="filter-block">
+        <h2 class="block-title">Knowledge Layers</h2>
+        <p class="block-note">Filter by where the information originates.</p>
+        <div id="layer-list" class="layer-list"></div>
+      </section>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="tab-index">Index <span id="people-count" class="count-badge">0</span></button>
+        <button class="tab" data-tab="tab-stories">Stories</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-index">
+        <div id="people-list" class="people-list"></div>
+      </div>
+      <div class="tab-panel" id="tab-stories">
+        <div id="story-list" class="story-list"></div>
+      </div>
+    </aside>
+
+    <!-- Center: the living canvas -->
+    <main class="stage">
+      <canvas id="canvas"></canvas>
+      <div id="banner" class="banner"></div>
+      <div id="tooltip" class="tooltip"></div>
+
+      <div class="stage-controls">
+        <button id="recenter-btn" class="ctrl-btn" title="Recenter the canvas">⊕ Recenter</button>
+        <button id="reset-btn" class="ctrl-btn" title="Clear filters and selection">↺ Reset</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-row"><span class="legend-ring solid"></span> Named in the Quran</div>
+        <div class="legend-row"><span class="legend-ring dashed"></span> Unnamed / known via tradition</div>
+        <div class="legend-hint">Drag nodes · scroll to zoom · click to explore</div>
+      </div>
+    </main>
+
+    <!-- Right: detail drawer -->
+    <aside class="detail" id="detail"></aside>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/graph.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
