@@ -1,21 +1,25 @@
 /* People of the Quran — styles
- * A calm, parchment-on-night palette evoking manuscript illumination.
+ * A cosmic, glass-morphism interface over a deep-space canvas:
+ * floating clusters around a glowing core of divine light.
  */
 
 :root {
-  --bg: #14151c;
-  --bg-2: #1a1c26;
-  --panel: #1d1f2b;
-  --panel-2: #23263354;
-  --ink: #e9e4d6;
-  --ink-dim: #a7a292;
-  --ink-faint: #6f6b5f;
-  --line: #2c2f3d;
-  --gold: #c99121;
-  --gold-soft: #e0b84d;
-  --accent: #2a9d8f;
-  --radius: 12px;
-  --shadow: 0 10px 40px rgba(0,0,0,0.45);
+  --bg: #04050d;
+  --bg-2: #0a0a1c;
+  --panel: rgba(15, 18, 32, 0.62);
+  --panel-2: rgba(140, 160, 220, 0.06);
+  --glass-stroke: rgba(150, 170, 230, 0.14);
+  --ink: #eaf2ff;
+  --ink-dim: #9fb0d0;
+  --ink-faint: #647093;
+  --line: rgba(150, 170, 230, 0.12);
+  --gold: #d8a838;
+  --gold-soft: #f0c94e;
+  --accent: #6ff7ff;
+  --neon-violet: #b388ff;
+  --neon-pink: #ff6fb5;
+  --radius: 14px;
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
   --serif: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
 }
@@ -25,9 +29,7 @@ html, body { height: 100%; margin: 0; }
 body {
   font-family: var(--font);
   background:
-    radial-gradient(1200px 600px at 70% -10%, #20222f 0%, transparent 60%),
-    radial-gradient(900px 500px at 10% 110%, #1b1d28 0%, transparent 55%),
-    var(--bg);
+    radial-gradient(1200px 800px at 50% 38%, #0a0a1c 0%, #04050d 62%, #000 100%);
   color: var(--ink);
   overflow: hidden;
 }
@@ -37,8 +39,9 @@ body {
   height: 64px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 20px;
-  border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #1b1d28, #16171f);
+  border-bottom: 1px solid var(--glass-stroke);
+  background: rgba(8, 10, 20, 0.55);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   position: relative; z-index: 20;
 }
 .brand { display: flex; align-items: center; gap: 14px; }
@@ -73,8 +76,9 @@ body {
 
 /* ---------- Sidebar ---------- */
 .sidebar {
-  background: linear-gradient(180deg, #181a24, #15161e);
-  border-right: 1px solid var(--line);
+  background: rgba(8, 10, 20, 0.5);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-right: 1px solid var(--glass-stroke);
   overflow-y: auto;
   padding: 16px;
   display: flex; flex-direction: column; gap: 18px;
@@ -82,7 +86,7 @@ body {
 .search-wrap { position: sticky; top: 0; z-index: 2; }
 #search {
   width: 100%; padding: 11px 14px;
-  background: var(--panel); border: 1px solid var(--line);
+  background: rgba(12, 16, 30, 0.7); border: 1px solid var(--glass-stroke);
   border-radius: 10px; color: var(--ink); font-size: 14px; outline: none;
 }
 #search:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,145,33,0.12); }
@@ -180,20 +184,25 @@ body {
 
 .stage-controls { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 5; }
 .ctrl-btn {
-  background: rgba(29,31,43,0.85); backdrop-filter: blur(6px);
-  border: 1px solid var(--line); color: var(--ink-dim);
-  padding: 8px 12px; border-radius: 9px; font-size: 12.5px; cursor: pointer;
+  background: var(--panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-stroke); color: var(--ink-dim);
+  padding: 8px 12px; border-radius: 10px; font-size: 12.5px; cursor: pointer;
 }
 .ctrl-btn:hover { color: var(--ink); border-color: var(--gold); }
-.ctrl-btn.active { color: var(--gold-soft); border-color: var(--gold); background: rgba(201,145,33,0.12); }
+.ctrl-btn.active { color: var(--gold-soft); border-color: var(--gold); background: rgba(216,168,56,0.14); }
 
 .legend {
   position: absolute; bottom: 16px; left: 16px; z-index: 5;
-  background: rgba(20,21,28,0.78); backdrop-filter: blur(6px);
-  border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px;
+  background: var(--panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-stroke); border-radius: 12px; padding: 11px 13px;
   font-size: 11.5px; color: var(--ink-dim); display: flex; flex-direction: column; gap: 6px;
 }
 .legend-row { display: flex; align-items: center; gap: 8px; }
+.legend-core {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fffdf5, #f0c94e 70%);
+  box-shadow: 0 0 8px rgba(240,201,78,0.9);
+}
 .legend-ring { width: 13px; height: 13px; border-radius: 50%; background: #8d99ae; }
 .legend-ring.solid { border: 2px solid #fff; }
 .legend-ring.dashed { border: 2px dashed #fff; }
@@ -213,7 +222,7 @@ body {
 .path-panel {
   position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(20px);
   max-width: min(92%, 720px); z-index: 7;
-  background: rgba(20,21,28,0.93); backdrop-filter: blur(8px);
+  background: rgba(10, 12, 24, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--gold); border-radius: 14px;
   padding: 14px 18px 14px; box-shadow: var(--shadow);
   opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
@@ -246,8 +255,9 @@ body {
 
 .tooltip {
   position: absolute; z-index: 8; pointer-events: none;
-  background: rgba(18,19,26,0.95); border: 1px solid var(--gold);
-  border-radius: 8px; padding: 7px 11px; font-size: 12px;
+  background: rgba(10, 12, 24, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--gold);
+  border-radius: 10px; padding: 7px 11px; font-size: 12px;
   display: none; flex-direction: column; max-width: 220px; box-shadow: var(--shadow);
 }
 .tooltip.show { display: flex; }
@@ -275,8 +285,9 @@ body {
 
 /* ---------- Detail drawer ---------- */
 .detail {
-  background: linear-gradient(180deg, #181a24, #15161e);
-  border-left: 1px solid var(--line);
+  background: rgba(8, 10, 20, 0.62);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-left: 1px solid var(--glass-stroke);
   width: 0; overflow: hidden;
   transition: width 0.28s ease;
 }

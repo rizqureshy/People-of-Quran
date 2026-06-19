@@ -60,7 +60,11 @@
     this._lastX = 0; this._lastY = 0; this._moved = 0;
     this._downAt = 0;
 
-    this._makeStars(460);
+    this._time = 0;
+    this.coreColor = options.coreColor || "#f0c94e";   // luminous gold — the divine light at the centre
+    this.clusterAnchors = {};
+    this._makeStars();
+    this._nebulae = this._makeNebulae();
     this._bind();
     this._resize();
     this._running = true;
@@ -68,35 +72,84 @@
     requestAnimationFrame(this._tick);
   }
 
-  PQGraph3D.prototype._makeStars = function (n) {
+  // Multi-layer star-field (near/mid/far) with per-star twinkle phase.
+  PQGraph3D.prototype._makeStars = function () {
     this.stars = [];
-    for (var i = 0; i < n; i++) {
-      // Random point in a large spherical shell around the scene.
-      var u = Math.random() * 2 - 1;
-      var t = Math.random() * Math.PI * 2;
-      var r = 1700 + Math.random() * 2600;
-      var s = Math.sqrt(1 - u * u);
-      this.stars.push({
-        x: r * s * Math.cos(t), y: r * u, z: r * s * Math.sin(t),
-        b: 0.25 + Math.random() * 0.6, sz: Math.random() < 0.12 ? 1.8 : 1
+    var layers = [
+      { n: 520, rMin: 2400, rMax: 5200, b: 0.22, sz: 0.9, tw: 0.0 },   // far
+      { n: 900, rMin: 1100, rMax: 2300, b: 0.5, sz: 1.0, tw: 0.0 },    // mid
+      { n: 420, rMin: 560, rMax: 1100, b: 0.7, sz: 1.5, tw: 0.9 }      // near, twinkling
+    ];
+    for (var L = 0; L < layers.length; L++) {
+      var ly = layers[L];
+      for (var i = 0; i < ly.n; i++) {
+        var u = Math.random() * 2 - 1;
+        var t = Math.random() * Math.PI * 2;
+        var r = ly.rMin + Math.random() * (ly.rMax - ly.rMin);
+        var s = Math.sqrt(1 - u * u);
+        var hue = 0.55 + Math.random() * 0.12;            // bluish-white
+        this.stars.push({
+          x: r * s * Math.cos(t), y: r * u, z: r * s * Math.sin(t),
+          b: ly.b * (0.6 + Math.random() * 0.6),
+          sz: ly.sz * (Math.random() < 0.1 ? 1.8 : 1),
+          tw: ly.tw, ph: Math.random() * Math.PI * 2,
+          col: "hsl(" + Math.round(hue * 360) + ",60%," + Math.round(78 + Math.random() * 17) + "%)"
+        });
+      }
+    }
+  };
+
+  // A few large, slowly-drifting additive nebula clouds for atmosphere.
+  PQGraph3D.prototype._makeNebulae = function () {
+    var defs = [
+      { col: [120, 70, 190], a: 0.40 },   // violet
+      { col: [40, 90, 200], a: 0.34 },     // blue
+      { col: [70, 160, 150], a: 0.26 },    // teal
+      { col: [216, 168, 56], a: 0.22 }     // warm gold (echoes the core)
+    ];
+    var out = [];
+    for (var i = 0; i < defs.length; i++) {
+      var u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2;
+      var r = 700 + Math.random() * 700, s = Math.sqrt(1 - u * u);
+      out.push({
+        x: r * s * Math.cos(t), y: r * u * 0.6, z: r * s * Math.sin(t),
+        col: defs[i].col, a: defs[i].a, size: 520 + Math.random() * 420,
+        ph: Math.random() * Math.PI * 2
       });
     }
+    return out;
   };
 
   PQGraph3D.prototype.setData = function (nodes, edges) {
     var self = this;
     var prev = this.nodeById;
-    var R = 360;
-    this.nodes = nodes.map(function (n, i) {
-      var old = prev[n.id];
-      // Seed on a sphere (Fibonacci) so the initial cloud is even.
-      var t = (i + 0.5) / nodes.length;
+
+    // Give each family its own anchor floating around the core — a
+    // Fibonacci sphere of cluster centres at a fixed orbit radius.
+    var groups = [];
+    nodes.forEach(function (n) { var g = n.group || "Other"; if (groups.indexOf(g) < 0) groups.push(g); });
+    var CLUSTER_R = 330;
+    this.clusterAnchors = {};
+    groups.forEach(function (g, i) {
+      var t = (i + 0.5) / groups.length;
       var inc = Math.acos(1 - 2 * t);
       var az = Math.PI * (1 + Math.sqrt(5)) * i;
+      self.clusterAnchors[g] = v(
+        CLUSTER_R * Math.sin(inc) * Math.cos(az),
+        CLUSTER_R * Math.cos(inc) * 0.72,        // flatten a little, galaxy-like
+        CLUSTER_R * Math.sin(inc) * Math.sin(az)
+      );
+    });
+
+    this.nodes = nodes.map(function (n) {
+      var old = prev[n.id];
+      var a = self.clusterAnchors[n.group || "Other"];
+      var jitter = function () { return (Math.random() - 0.5) * 120; };
       return Object.assign({}, n, {
-        x: old ? old.x : R * Math.sin(inc) * Math.cos(az),
-        y: old ? old.y : R * Math.cos(inc),
-        z: old ? old.z : R * Math.sin(inc) * Math.sin(az),
+        anchor: a,
+        x: old ? old.x : a.x + jitter(),
+        y: old ? old.y : a.y + jitter(),
+        z: old ? old.z : a.z + jitter(),
         vx: 0, vy: 0, vz: 0,
         r: n.r || 10
       });
@@ -169,8 +222,19 @@
         a.vx += fx; a.vy += fy; a.vz += fz;
         b.vx -= fx; b.vy -= fy; b.vz -= fz;
       }
-      // Gentle pull to origin keeps the cloud cohesive.
-      a.vx -= a.x * 0.0009; a.vy -= a.y * 0.0009; a.vz -= a.z * 0.0009;
+      // Pull each node toward its family's anchor so clusters stay
+      // coherent and float as distinct islands around the core.
+      if (a.anchor) {
+        a.vx += (a.anchor.x - a.x) * 0.012;
+        a.vy += (a.anchor.y - a.y) * 0.012;
+        a.vz += (a.anchor.z - a.z) * 0.012;
+      }
+      // Keep nodes from drifting into the luminous core at the centre.
+      var dc2 = a.x * a.x + a.y * a.y + a.z * a.z || 1;
+      if (dc2 < 19600) {                       // within ~140 of centre
+        var dc = Math.sqrt(dc2), push = (140 - dc) * 0.03;
+        a.vx += (a.x / dc) * push; a.vy += (a.y / dc) * push; a.vz += (a.z / dc) * push;
+      }
     }
     var target = 150;
     for (var k = 0; k < this.edges.length; k++) {
@@ -244,25 +308,45 @@
   PQGraph3D.prototype._draw = function () {
     var ctx = this.ctx;
     var W = this.canvas.clientWidth, H = this.canvas.clientHeight;
+    this._time += 0.016;
+    var time = this._time;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
-    // Deep-space background
-    var bg = ctx.createRadialGradient(W * 0.5, H * 0.42, 40, W * 0.5, H * 0.5, Math.max(W, H) * 0.75);
-    bg.addColorStop(0, "#161a28");
-    bg.addColorStop(0.55, "#0f111b");
-    bg.addColorStop(1, "#070810");
+    // Deep-space background (near-black navy, like the reference canvas)
+    var bg = ctx.createRadialGradient(W * 0.5, H * 0.4, 40, W * 0.5, H * 0.5, Math.max(W, H) * 0.8);
+    bg.addColorStop(0, "#0a0a1c");
+    bg.addColorStop(0.6, "#04050d");
+    bg.addColorStop(1, "#000000");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
     var cam = this._camera();
 
-    // Stars
+    // Nebula clouds — large additive radial glows that parallax with the camera.
+    ctx.globalCompositeOperation = "lighter";
+    for (var nb = 0; nb < this._nebulae.length; nb++) {
+      var ne = this._nebulae[nb];
+      var pn = this._project(ne, cam);
+      if (!pn) continue;
+      var rad = ne.size * pn.scale;
+      if (rad < 8) continue;
+      var puls = 0.85 + 0.15 * Math.sin(time * 0.25 + ne.ph);
+      var gN = ctx.createRadialGradient(pn.sx, pn.sy, 0, pn.sx, pn.sy, rad);
+      gN.addColorStop(0, "rgba(" + ne.col[0] + "," + ne.col[1] + "," + ne.col[2] + "," + (ne.a * puls) + ")");
+      gN.addColorStop(1, "rgba(" + ne.col[0] + "," + ne.col[1] + "," + ne.col[2] + ",0)");
+      ctx.fillStyle = gN;
+      ctx.beginPath(); ctx.arc(pn.sx, pn.sy, rad, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalCompositeOperation = "source-over";
+
+    // Stars (multi-layer, near layer twinkles)
     for (var i = 0; i < this.stars.length; i++) {
       var s = this.stars[i];
       var ps = this._project(s, cam);
       if (!ps || ps.sx < 0 || ps.sx > W || ps.sy < 0 || ps.sy > H) continue;
-      ctx.globalAlpha = s.b * Math.min(1, 1400 / ps.depth);
-      ctx.fillStyle = "#cfd6f0";
+      var tw = s.tw ? (0.6 + 0.4 * Math.sin(time * 2.2 + s.ph)) : 1;
+      ctx.globalAlpha = Math.min(1, s.b * tw * Math.min(1, 1800 / ps.depth));
+      ctx.fillStyle = s.col || "#cfd6f0";
       ctx.fillRect(ps.sx, ps.sy, s.sz, s.sz);
     }
     ctx.globalAlpha = 1;
@@ -277,6 +361,23 @@
         if (e.source === active) neighbors[e.target] = true;
         if (e.target === active) neighbors[e.source] = true;
       });
+    }
+
+    // Radiance — faint gold lines from the core out to each family cluster,
+    // so everything visibly emanates from the centre.
+    var corePix = this._project(v(0, 0, 0), cam);
+    if (corePix && !pathOn) {
+      for (var gA in this.clusterAnchors) {
+        var pa = this._project(this.clusterAnchors[gA], cam);
+        if (!pa) continue;
+        var rf = Math.min(1, 900 / pa.depth);
+        ctx.beginPath();
+        ctx.moveTo(corePix.sx, corePix.sy);
+        ctx.lineTo(pa.sx, pa.sy);
+        ctx.strokeStyle = "rgba(240,201,78," + (0.10 * rf) + ")";
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
     }
 
     // Constellation labels — faint family names floating over each cluster.
@@ -302,7 +403,8 @@
       ctx.stroke();
     }
 
-    // Nodes — far to near (painter's algorithm)
+    // Nodes — far to near (painter's algorithm). The luminous core is
+    // depth-sorted in with the people so it occludes correctly.
     var drawList = [];
     for (var m = 0; m < this.nodes.length; m++) {
       var nn = this.nodes[m];
@@ -310,10 +412,12 @@
       if (!pp) continue;
       drawList.push({ n: nn, p: pp });
     }
+    if (corePix) drawList.push({ core: true, p: corePix });
     drawList.sort(function (a, b) { return b.p.depth - a.p.depth; });
     this._screen = {}; // cache for hit-testing
 
     for (var di = 0; di < drawList.length; di++) {
+      if (drawList[di].core) { this._drawCore(ctx, drawList[di].p, time); continue; }
       var node = drawList[di].n, proj = drawList[di].p;
       var onPath = pathOn && this.pathNodes[node.id];
       var dim = pathOn ? !onPath : ((active && !neighbors[node.id]) || node.dim);
@@ -366,6 +470,49 @@
         ctx.globalAlpha = 1;
       }
     }
+  };
+
+  /* The luminous core at the centre of the universe — the divine light
+   * from which every story radiates. Pulsing additive halo + bright orb. */
+  PQGraph3D.prototype._drawCore = function (ctx, p, time) {
+    var base = 46 * p.scale;
+    var pulse = 1 + 0.05 * Math.sin(time * 1.4);
+    var R = Math.max(10, base * pulse);
+    var col = this.coreColor;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    // Wide soft aura
+    var aura = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, R * 3.4);
+    aura.addColorStop(0, "rgba(255,236,170,0.55)");
+    aura.addColorStop(0.25, "rgba(240,201,78,0.30)");
+    aura.addColorStop(1, "rgba(240,201,78,0)");
+    ctx.fillStyle = aura;
+    ctx.beginPath(); ctx.arc(p.sx, p.sy, R * 3.4, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+
+    // Bright core orb with a hot centre
+    var core = ctx.createRadialGradient(p.sx - R * 0.25, p.sy - R * 0.25, R * 0.1, p.sx, p.sy, R);
+    core.addColorStop(0, "#fffdf5");
+    core.addColorStop(0.45, "#ffe9a8");
+    core.addColorStop(1, col);
+    ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(p.sx, p.sy, R, 0, Math.PI * 2); ctx.fill();
+
+    // Faceted ring (a nod to the reference's wireframe icosahedron)
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = "rgba(255,240,190,0.5)";
+    ctx.lineWidth = 1.2;
+    var pts = 12;
+    ctx.beginPath();
+    for (var k = 0; k <= pts; k++) {
+      var a = (Math.PI * 2 * k) / pts + time * 0.2;
+      var rr = R * (1.5 + 0.12 * Math.sin(k * 2 + time));
+      var x = p.sx + Math.cos(a) * rr, y = p.sy + Math.sin(a) * rr * 0.6;
+      if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
   };
 
   /* Faint family-cluster labels, drawn behind the nodes. */

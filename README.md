@@ -19,10 +19,11 @@ and identities, not only names.**
 
 ## ✦ What you can do
 
-- **Fly through a 3D universe** — people float as glowing seals in a star-field,
-  drawn together into family constellations by a 3-dimensional force simulation.
-  Drag to orbit, scroll to zoom, click a seal to explore. A one-click toggle
-  drops back to a flat 2D canvas whenever you want it.
+- **Fly through a 3D universe** — at its centre burns a **luminous golden core**
+  (the Qur'an, the light from which every story radiates); the families float
+  around it as distinct **clusters** in a deep-space field of drifting nebulae
+  and a multi-layer, twinkling star-field. Drag to orbit, scroll to zoom, click
+  a seal to explore. A one-click toggle drops back to a flat 2D canvas.
 - **See each person depicted** — respectfully and aniconically. Islamic tradition
   does not depict the faces of the prophets (and the Prophet Muhammad is never
   depicted at all), so every person is given a unique, procedurally-generated
