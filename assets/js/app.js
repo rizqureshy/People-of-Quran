@@ -30,6 +30,8 @@
     "faithful-companion": "#f4a261"
   };
   function colorFor(p) {
+    // Prefer the depiction palette so list dots match the 3D seals.
+    if (window.PQDepict) return window.PQDepict.colorFor(p);
     var a = (p.archetypes && p.archetypes[0]) || null;
     return (a && archetypeColor[a]) || "#8d99ae";
   }
@@ -240,9 +242,16 @@
           '<span class="rel-name">' + other.name + '</span></button>';
       }).join("");
 
+    var arabic = window.PQDepict ? window.PQDepict.arabicOf(p) : "";
+
     d.innerHTML =
       '<button class="detail-close" aria-label="Close">×</button>' +
       '<div class="detail-scroll">' +
+        '<div class="detail-depiction">' +
+          '<canvas class="seal-canvas" width="320" height="320"></canvas>' +
+          (arabic ? '<div class="arabic-name" dir="rtl">' + arabic + '</div>' : '') +
+          '<div class="depiction-note">aniconic seal · geometric depiction</div>' +
+        '</div>' +
         '<div class="detail-head">' +
           '<div class="detail-kicker">' + (p.era || "") +
             (p.named ? '' : ' · <span class="tag-unnamed">unnamed in the Quran</span>') + '</div>' +
@@ -265,6 +274,13 @@
     Array.prototype.forEach.call(d.querySelectorAll(".rel-link"), function (btn) {
       btn.onclick = function () { select(btn.getAttribute("data-id"), true); };
     });
+
+    // Render the person's geometric seal at high resolution.
+    var seal = d.querySelector(".seal-canvas");
+    if (seal && window.PQDepict) {
+      var sctx = seal.getContext("2d");
+      window.PQDepict.drawSeal(sctx, seal.width / 2, seal.height / 2, seal.width * 0.4, p, { glow: true });
+    }
   }
 
   /* ================= Behaviour ================= */
@@ -287,7 +303,8 @@
     spec.nodes.forEach(function (n) {
       var p = personById[n.id];
       var ok = passesFilters(p) && (!restrict || restrict[n.id]);
-      if (!ok) { n.color = "#2a2d3a"; n.r = Math.max(5, n.r - 2); }
+      n.dim = !ok;                                // 3D engine reads this
+      if (!ok) { n.color = "#2a2d3a"; }           // 2D engine reads colour
     });
     graph.setData(spec.nodes, spec.edges);
     if (state.selected) graph.setSelected(state.selected);
@@ -306,31 +323,60 @@
   }
 
   /* ================= Tooltip ================= */
-  function setupTooltip() {
+  function onHover(id, node, screenPos) {
     var tip = document.getElementById("tooltip");
-    graph.onHover = function (id, node, screenPos) {
-      if (!id) { tip.classList.remove("show"); return; }
-      var p = personById[id];
-      if (!p) { tip.classList.remove("show"); return; }
-      tip.innerHTML = '<strong>' + p.name + '</strong><span>' + (p.title || "") + '</span>';
-      tip.style.left = (screenPos.x + 14) + "px";
-      tip.style.top = (screenPos.y + 14) + "px";
-      tip.classList.add("show");
+    if (!id) { tip.classList.remove("show"); return; }
+    var p = personById[id];
+    if (!p) { tip.classList.remove("show"); return; }
+    var ar = window.PQDepict ? window.PQDepict.arabicOf(p) : "";
+    tip.innerHTML = '<strong>' + p.name + '</strong>' +
+      (ar ? '<span class="tip-ar">' + ar + '</span>' : '') +
+      '<span>' + (p.title || "") + '</span>';
+    tip.style.left = (screenPos.x + 14) + "px";
+    tip.style.top = (screenPos.y + 14) + "px";
+    tip.classList.add("show");
+  }
+
+  /* ================= Engine (2D / 3D) ================= */
+  var mode = "3d";
+
+  function buildEngine() {
+    var canvas = document.getElementById("canvas");
+    var opts = {
+      onSelect: function (id) { select(id, false); },
+      onHover: onHover
     };
+    if (mode === "3d") {
+      opts.personById = personById;
+      opts.getSprite = function (id) {
+        var p = personById[id];
+        return p && window.PQDepict ? window.PQDepict.sprite(p, 128) : null;
+      };
+      graph = new PQGraph3D(canvas, opts);
+    } else {
+      graph = new PQGraph(canvas, opts);
+    }
+    applyFilters();                       // pushes current node/edge state
+    if (state.selected) graph.setSelected(state.selected);
+    setTimeout(function () { graph.center(); }, 60);
+  }
+
+  function switchMode(next) {
+    if (next === mode) return;
+    if (graph && graph.stop) graph.stop();
+    mode = next;
+    buildEngine();
+    var btn = document.getElementById("mode-btn");
+    if (btn) btn.textContent = mode === "3d" ? "◳ 2D view" : "✦ 3D view";
+    var rot = document.getElementById("rotate-btn");
+    if (rot) rot.style.display = mode === "3d" ? "" : "none";
+    flashBanner(mode === "3d" ? "3D universe" : "2D canvas");
   }
 
   /* ================= Init ================= */
   function init() {
-    var canvas = document.getElementById("canvas");
-    graph = new PQGraph(canvas, {
-      onSelect: function (id) { select(id, false); }
-    });
+    buildEngine();
 
-    var spec = buildGraphSpec();
-    graph.setData(spec.nodes, spec.edges);
-    setTimeout(function () { graph.center(); }, 60);
-
-    setupTooltip();
     renderArchetypes();
     renderLayers();
     renderPeopleList();
@@ -349,7 +395,23 @@
       applyFilters();
       setTimeout(function () { graph.center(); }, 40);
     };
-    document.getElementById("recenter-btn").onclick = function () { graph.center(); };
+    document.getElementById("recenter-btn").onclick = function () {
+      if (graph.setAutoRotate) graph.setAutoRotate(true);
+      graph.center();
+    };
+
+    var modeBtn = document.getElementById("mode-btn");
+    if (modeBtn) modeBtn.onclick = function () { switchMode(mode === "3d" ? "2d" : "3d"); };
+
+    var rotateBtn = document.getElementById("rotate-btn");
+    if (rotateBtn) rotateBtn.onclick = function () {
+      if (!graph.setAutoRotate) return;
+      rotateBtn._on = !rotateBtn._on;
+      graph.setAutoRotate(rotateBtn._on);
+      rotateBtn.classList.toggle("active", rotateBtn._on);
+      rotateBtn.textContent = rotateBtn._on ? "⟳ Rotating" : "⏸ Paused";
+    };
+    if (rotateBtn) { rotateBtn._on = true; rotateBtn.classList.add("active"); }
 
     // Tabs (Index / Stories)
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (tab) {

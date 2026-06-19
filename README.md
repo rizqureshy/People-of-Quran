@@ -19,9 +19,16 @@ and identities, not only names.**
 
 ## ✦ What you can do
 
-- **Explore the living canvas** — a force-directed graph of people connected by
-  family, teaching, alliance, and opposition. Drag nodes, zoom, and follow the
-  threads.
+- **Fly through a 3D universe** — people float as glowing seals in a star-field,
+  drawn together into family constellations by a 3-dimensional force simulation.
+  Drag to orbit, scroll to zoom, click a seal to explore. A one-click toggle
+  drops back to a flat 2D canvas whenever you want it.
+- **See each person depicted** — respectfully and aniconically. Islamic tradition
+  does not depict the faces of the prophets (and the Prophet Muhammad is never
+  depicted at all), so every person is given a unique, procedurally-generated
+  **geometric seal** — a star-rosette in the visual language of Islamic art,
+  coloured by archetype — paired with the **calligraphy of their name**. No
+  faces, no portraits, no image assets; it scales to unlimited people.
 - **Move through the network** — open anyone and jump to their connections:
   `Adam → Hawwa → Habil → Qabil`, `Ibrahim → Hajar → Ismail → Muhammad`,
   `Musa → Pharaoh → Haman → Asiya → Bani Israel`, `Maryam → Isa → Hawariyyun`.
@@ -57,12 +64,20 @@ A deliberately simple, **zero-dependency static app** so the knowledge — not t
 tooling — is the focus, and so it runs anywhere offline.
 
 ```
-index.html              Page shell and layout
-assets/css/styles.css   Parchment-on-night manuscript styling
-assets/js/data.js       The dataset (people, relationships, sources, stories)
-assets/js/graph.js      The living canvas — a small force-directed graph engine
-assets/js/app.js        UI: search, filters, the people index, the detail drawer
+index.html               Page shell and layout
+assets/css/styles.css    Parchment-on-night manuscript styling
+assets/js/data.js        The dataset (people, relationships, sources, stories)
+assets/js/depictions.js  Aniconic visual identity — the geometric seal generator
+assets/js/graph3d.js     The 3D universe — orbit camera + perspective projection
+assets/js/graph.js       The flat 2D canvas — a force-directed graph engine
+assets/js/app.js         UI: search, filters, people index, detail drawer, depiction
 ```
+
+Both graph engines expose the same small interface (`setData`, `center`,
+`focusNode`, `setSelected`, `onSelect`, `onHover`) so the app swaps between the
+3D universe and the 2D canvas at runtime. Everything renders on a plain 2D
+canvas via hand-rolled perspective projection — **no WebGL, no Three.js, no
+network** — so it runs anywhere offline.
 
 ### The data model
 

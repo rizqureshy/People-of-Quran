@@ -352,5 +352,7 @@
     c.height = c.clientHeight * this.dpr;
   };
 
+  PQGraph.prototype.stop = function () { this._running = false; };
+
   window.PQGraph = PQGraph;
 })();

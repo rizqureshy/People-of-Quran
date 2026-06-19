@@ -15,7 +15,7 @@
       <div class="brand-mark">۞</div>
       <div class="brand-text">
         <h1>People of the Quran</h1>
-        <p>A living canvas of human stories</p>
+        <p>A 3D universe of human stories</p>
       </div>
     </div>
     <div class="stats">
@@ -64,14 +64,16 @@
       <div id="tooltip" class="tooltip"></div>
 
       <div class="stage-controls">
-        <button id="recenter-btn" class="ctrl-btn" title="Recenter the canvas">⊕ Recenter</button>
+        <button id="mode-btn" class="ctrl-btn" title="Switch between the 3D universe and the 2D canvas">◳ 2D view</button>
+        <button id="rotate-btn" class="ctrl-btn active" title="Pause or resume the orbit">⟳ Rotating</button>
+        <button id="recenter-btn" class="ctrl-btn" title="Recenter the universe">⊕ Recenter</button>
         <button id="reset-btn" class="ctrl-btn" title="Clear filters and selection">↺ Reset</button>
       </div>
 
       <div class="legend">
         <div class="legend-row"><span class="legend-ring solid"></span> Named in the Quran</div>
         <div class="legend-row"><span class="legend-ring dashed"></span> Unnamed / known via tradition</div>
-        <div class="legend-hint">Drag nodes · scroll to zoom · click to explore</div>
+        <div class="legend-hint">Drag to orbit · scroll to zoom · click a seal to explore</div>
       </div>
     </main>
 
@@ -80,7 +82,9 @@
   </div>
 
   <script src="assets/js/data.js"></script>
+  <script src="assets/js/depictions.js"></script>
   <script src="assets/js/graph.js"></script>
+  <script src="assets/js/graph3d.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>

@@ -185,6 +185,7 @@ body {
   padding: 8px 12px; border-radius: 9px; font-size: 12.5px; cursor: pointer;
 }
 .ctrl-btn:hover { color: var(--ink); border-color: var(--gold); }
+.ctrl-btn.active { color: var(--gold-soft); border-color: var(--gold); background: rgba(201,145,33,0.12); }
 
 .legend {
   position: absolute; bottom: 16px; left: 16px; z-index: 5;
@@ -217,6 +218,25 @@ body {
 .tooltip.show { display: flex; }
 .tooltip strong { font-family: var(--serif); font-size: 13.5px; }
 .tooltip span { color: var(--ink-dim); font-size: 11px; }
+.tooltip .tip-ar { color: var(--gold-soft); font-size: 15px; direction: rtl; margin: 1px 0; }
+
+/* Visual depiction (geometric seal + calligraphy) */
+.detail-depiction {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 8px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 4px;
+}
+.seal-canvas {
+  width: 150px; height: 150px;
+  filter: drop-shadow(0 6px 22px rgba(0,0,0,0.5));
+}
+.arabic-name {
+  font-size: 34px; line-height: 1.2; color: var(--gold-soft);
+  font-family: 'Scheherazade New', 'Amiri', 'Traditional Arabic', 'Noto Naskh Arabic', serif;
+  text-shadow: 0 0 22px rgba(201,145,33,0.3);
+}
+.depiction-note {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-faint);
+}
 
 /* ---------- Detail drawer ---------- */
 .detail {
