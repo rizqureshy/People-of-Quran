@@ -7,6 +7,16 @@
   <meta name="description" content="A living, interconnected knowledge universe of every human being mentioned, referenced, implied, or connected to the Quran." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="assets/css/styles.css" />
+
+  <!-- Vendored Three.js (offline) resolved for the WebGL engine -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./assets/vendor/three/three.module.js",
+      "three/addons/": "./assets/vendor/three/jsm/"
+    }
+  }
+  </script>
 </head>
 <body>
   <header class="topbar">
@@ -59,7 +69,8 @@
 
     <!-- Center: the living canvas -->
     <main class="stage">
-      <canvas id="canvas"></canvas>
+      <canvas id="canvas-gl"></canvas>     <!-- WebGL universe (Three.js + bloom) -->
+      <canvas id="canvas"></canvas>        <!-- 2D fallback / flat canvas -->
       <div id="banner" class="banner"></div>
       <div id="tooltip" class="tooltip"></div>
 
@@ -103,6 +114,8 @@
   <script src="assets/js/depictions.js"></script>
   <script src="assets/js/graph.js"></script>
   <script src="assets/js/graph3d.js"></script>
+  <!-- WebGL engine (ES module). Sets window.PQGraphGL before DOMContentLoaded. -->
+  <script type="module" src="assets/js/graph-webgl.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>

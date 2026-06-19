@@ -626,21 +626,37 @@
   /* ================= Engine (2D / 3D) ================= */
   var mode = "3d";
 
+  // Show the canvas the active engine renders into (WebGL vs 2D).
+  function showCanvas(which) {
+    var c2d = document.getElementById("canvas");
+    var cgl = document.getElementById("canvas-gl");
+    if (cgl) cgl.style.display = which === "gl" ? "block" : "none";
+    if (c2d) c2d.style.display = which === "2d" ? "block" : "none";
+  }
+
+  var glEngine = null;   // the WebGL engine persists (one GL context)
+
   function buildEngine() {
-    var canvas = document.getElementById("canvas");
     var opts = {
       onSelect: function (id) { select(id, false); },
       onHover: onHover
     };
-    if (mode === "3d") {
-      opts.personById = personById;
-      // Each person is a billboarded CARD: a glass tile carrying the
-      // seal and the floating name. Distant/dimmed nodes collapse to a
-      // glowing dot to keep the scene readable.
-      opts.drawNode = drawPersonCard;
-      graph = new PQGraph3D(canvas, opts);
+    if (mode === "3d" && window.PQGraphGL) {
+      // Full WebGL universe with real bloom (Three.js). Built once, reused.
+      showCanvas("gl");
+      if (!glEngine) {
+        opts.personById = personById; opts.depict = window.PQDepict;
+        glEngine = new window.PQGraphGL(document.getElementById("canvas-gl"), opts);
+      } else { glEngine.resume(); }
+      graph = glEngine;
+    } else if (mode === "3d") {
+      // Fallback: dependency-free canvas 3D, people as cards.
+      showCanvas("2d");
+      opts.personById = personById; opts.drawNode = drawPersonCard;
+      graph = new PQGraph3D(document.getElementById("canvas"), opts);
     } else {
-      graph = new PQGraph(canvas, opts);
+      showCanvas("2d");
+      graph = new PQGraph(document.getElementById("canvas"), opts);
     }
     applyFilters();                       // pushes current node/edge state
     if (state.selected) graph.setSelected(state.selected);
@@ -651,7 +667,8 @@
 
   function switchMode(next) {
     if (next === mode) return;
-    if (graph && graph.stop) graph.stop();
+    if (graph === glEngine && glEngine) glEngine.pause();
+    else if (graph && graph.stop) graph.stop();
     mode = next;
     buildEngine();
     var btn = document.getElementById("mode-btn");

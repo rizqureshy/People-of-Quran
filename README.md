@@ -79,20 +79,25 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 
 ## ✦ How it is built
 
-A deliberately simple, **zero-dependency static app** so the knowledge — not the
-tooling — is the focus, and so it runs anywhere offline.
+The 3D universe runs on **Three.js / WebGL** with a real **UnrealBloomPass** glow.
+Three.js is **vendored into the repo** (`assets/vendor/three/`) and resolved via a
+native **import map**, so there is still **no build step and no network needed** —
+it runs offline. A dependency-free 2D canvas mode (and a canvas-3D fallback for
+browsers without WebGL/import-map support) ships alongside it.
 
 ```
-index.html               Page shell and layout
-assets/css/styles.css    Parchment-on-night manuscript styling
-assets/js/data.js        The dataset (people, relationships, sources, stories)
-assets/js/depictions.js  Aniconic visual identity — the geometric seal generator
-assets/js/graph3d.js     The 3D universe — orbit camera + perspective projection
-assets/js/graph.js       The flat 2D canvas — a force-directed graph engine
-assets/js/app.js         UI: search, filters, people index, detail drawer, depiction
+index.html                Page shell, import map, and layout
+assets/css/styles.css     Cosmic glass-morphism styling
+assets/js/data.js         The dataset (people, relationships, sources, stories)
+assets/js/depictions.js   Aniconic visual identity — the geometric seal generator
+assets/js/graph-webgl.js  The WebGL universe — Three.js scene + UnrealBloom
+assets/js/graph3d.js      Canvas-3D fallback — orbit camera + perspective projection
+assets/js/graph.js        The flat 2D canvas — a force-directed graph engine
+assets/js/app.js          UI: search, filters, index, drawer, timeline, deep-links
+assets/vendor/three/      Vendored Three.js build + addons (bloom, OrbitControls)
 ```
 
-Both graph engines expose the same small interface (`setData`, `center`,
+All graph engines expose the same small interface (`setData`, `center`,
 `focusNode`, `setSelected`, `onSelect`, `onHover`) so the app swaps between the
 3D universe and the 2D canvas at runtime. Everything renders on a plain 2D
 canvas via hand-rolled perspective projection — **no WebGL, no Three.js, no
