@@ -40,6 +40,7 @@
   var state = {
     activeArchetypes: {},     // id -> true (empty = all)
     activeLayers: {},         // id -> true (empty = all)
+    activeEra: null,          // selected era on the timeline ribbon (null = all)
     search: "",
     selected: null,
     pathMode: false,          // awaiting path endpoint clicks
@@ -47,6 +48,12 @@
     activePath: null,         // the currently highlighted path (for engine swaps)
     constellations: true
   };
+
+  // Eras in rough chronological order, for the timeline ribbon.
+  var ERA_ORDER = [
+    "Beginnings", "Early Prophets", "Patriarchs", "Exodus",
+    "Kingdom", "Gospel", "Other Prophets", "Revelation in Mecca"
+  ];
 
   /* ---- Build graph node/edge spec from people ---- */
   function buildGraphSpec() {
@@ -75,6 +82,7 @@
   /* A person passes the current filters if it matches every active
    * facet group (archetype AND layer AND search). */
   function passesFilters(p) {
+    if (state.activeEra && p.era !== state.activeEra) return false;
     var aKeys = Object.keys(state.activeArchetypes);
     if (aKeys.length) {
       var hit = aKeys.some(function (a) { return (p.archetypes || []).indexOf(a) >= 0; });
@@ -193,6 +201,31 @@
     });
   }
 
+  /* Timeline ribbon — one pill per era; click to scrub the universe to it. */
+  function renderEraRibbon() {
+    var el = document.getElementById("era-ribbon");
+    if (!el) return;
+    el.innerHTML = "";
+    var counts = {};
+    DATA.people.forEach(function (p) { counts[p.era] = (counts[p.era] || 0) + 1; });
+    var eras = ERA_ORDER.filter(function (e) { return counts[e]; });
+    var makePill = function (label, era) {
+      var b = document.createElement("button");
+      b.className = "era-pill" + (state.activeEra === era ? " active" : "");
+      b.textContent = label + (era ? "" : "");
+      b.onclick = function () {
+        state.activeEra = (state.activeEra === era) ? null : era;
+        applyFilters();
+        if (state.activeEra) flashBanner("Era · " + era);
+      };
+      return b;
+    };
+    var all = makePill("All", null);
+    all.className = "era-pill" + (state.activeEra ? "" : " active");
+    el.appendChild(all);
+    eras.forEach(function (e) { el.appendChild(makePill(e, e)); });
+  }
+
   /* Highlight a story by filtering the canvas to its people and opening
    * the first protagonist in the drawer. */
   function openStory(s) {
@@ -250,6 +283,7 @@
 
     d.innerHTML =
       '<button class="detail-close" aria-label="Close">×</button>' +
+      '<button class="detail-share" title="Copy a shareable link to this person">🔗</button>' +
       '<div class="detail-scroll">' +
         '<div class="detail-depiction">' +
           '<canvas class="seal-canvas" width="320" height="320"></canvas>' +
@@ -274,6 +308,16 @@
       graph.setSelected(null);
       renderDetail(null);
       renderPeopleList();
+      if (!state.activePath) updateHash();
+    };
+    var share = d.querySelector(".detail-share");
+    if (share) share.onclick = function () {
+      updateHash();
+      var url = location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { flashBanner("Link copied"); },
+          function () { flashBanner("Copy failed"); });
+      } else { flashBanner("Copy not supported"); }
     };
     Array.prototype.forEach.call(d.querySelectorAll(".rel-link"), function (btn) {
       btn.onclick = function () { select(btn.getAttribute("data-id"), true); };
@@ -298,6 +342,7 @@
     if (focus) graph.focusNode(id);
     renderDetail(p);
     renderPeopleList();
+    if (!state.activePath) updateHash();
   }
 
   /* ---- Path finding between two people ---- */
@@ -401,6 +446,7 @@
     Array.prototype.forEach.call(panel.querySelectorAll(".path-node"), function (b) {
       b.onclick = function () { select(b.getAttribute("data-id"), true); };
     });
+    updateHash();
   }
 
   function clearPath(silent) {
@@ -410,6 +456,7 @@
     if (panel) { panel.classList.remove("show"); panel.innerHTML = ""; }
     var btn = document.getElementById("path-btn");
     if (btn) btn.classList.remove("active");
+    updateHash();
     if (!silent) flashBanner("Path cleared");
   }
 
@@ -428,7 +475,35 @@
     if (state.selected) graph.setSelected(state.selected);
     renderArchetypes();
     renderLayers();
+    renderEraRibbon();
     renderPeopleList();
+  }
+
+  /* ---- Shareable deep-links (URL hash) ---- */
+  function updateHash() {
+    var h = "";
+    if (state.activePath && state.activePath.length > 1) h = "path=" + state.activePath.join(",");
+    else if (state.selected) h = "p=" + state.selected;
+    try { history.replaceState(null, "", h ? "#" + h : location.pathname + location.search); }
+    catch (e) { location.hash = h; }
+  }
+  function applyHash() {
+    var h = (location.hash || "").replace(/^#/, "");
+    if (!h) return false;
+    var m;
+    if ((m = h.match(/^path=(.+)$/))) {
+      var ids = m[1].split(",").filter(function (id) { return personById[id]; });
+      if (ids.length > 1) { showPath(ids); if (graph.skipIntro) graph.skipIntro(); return true; }
+    } else if ((m = h.match(/^p=(.+)$/))) {
+      if (personById[m[1]]) { select(m[1], true); if (graph.skipIntro) graph.skipIntro(); return true; }
+    }
+    return false;
+  }
+
+  /* ---- Hero overlay ---- */
+  function hideHero() {
+    var hero = document.getElementById("hero");
+    if (hero) hero.classList.add("hide");
   }
 
   var bannerTimer;
@@ -455,6 +530,99 @@
     tip.classList.add("show");
   }
 
+  /* ================= Node card renderer ================= */
+  function roundRectPath(ctx, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // Draws a person as a floating glass card (seal emblem + name + title).
+  function drawPersonCard(ctx, id, sx, sy, radius, flags) {
+    var p = personById[id];
+    if (!p || !window.PQDepict) return;
+    flags = flags || {};
+    var col = window.PQDepict.colorFor(p);
+
+    // Far / filtered-out → a simple glowing dot keeps the universe legible.
+    if (flags.dim || (radius < 5 && !flags.selected && !flags.hover)) {
+      var gg = ctx.createRadialGradient(sx, sy, 0.5, sx, sy, Math.max(3, radius) * 1.6);
+      gg.addColorStop(0, col); gg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = gg;
+      ctx.beginPath(); ctx.arc(sx, sy, Math.max(3, radius) * 1.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx, sy, Math.max(1.6, radius * 0.55), 0, Math.PI * 2);
+      ctx.fillStyle = col; ctx.fill();
+      return;
+    }
+
+    var sel = flags.selected, hov = flags.hover;
+    var fs = Math.max(11, Math.min(17, radius * 1.25));
+    var emR = fs * 0.95;                 // seal radius inside the card
+    var pad = fs * 0.6;
+    var showTitle = radius > 12 || sel;
+
+    ctx.font = "600 " + fs + "px 'Inter', system-ui, sans-serif";
+    var name = p.name;
+    var nameW = ctx.measureText(name).width;
+    var titleFs = Math.max(9, fs * 0.72);
+    var title = p.title || "";
+    var titleW = 0;
+    if (showTitle && title) { ctx.font = titleFs + "px 'Inter', system-ui, sans-serif"; titleW = ctx.measureText(title).width; }
+
+    var textW = Math.min(Math.max(nameW, titleW), 230);
+    var emD = emR * 2;
+    var cardW = pad + emD + pad * 0.7 + textW + pad;
+    var cardH = showTitle && title ? Math.max(emD + pad, fs + titleFs + pad * 1.5) : emD + pad;
+    var x = sx - cardW / 2, y = sy - cardH / 2;
+    var prophet = (p.archetypes || []).indexOf("prophet") >= 0;
+
+    // Card body (glass)
+    roundRectPath(ctx, x, y, cardW, cardH, Math.min(13, cardH * 0.32));
+    ctx.fillStyle = sel ? "rgba(22,20,34,0.94)" : "rgba(10,12,24,0.8)";
+    ctx.fill();
+    ctx.lineWidth = sel ? 2 : hov ? 1.6 : 1.1;
+    ctx.strokeStyle = sel ? "#f0c94e" : prophet ? "rgba(216,168,56,0.7)" : "rgba(150,170,230,0.3)";
+    ctx.stroke();
+
+    // Seal emblem
+    var ex = x + pad + emR, ey = y + cardH / 2;
+    window.PQDepict.drawSeal(ctx, ex, ey, emR, p, { glow: false });
+
+    // Floating name (+ title)
+    var tx = ex + emR + pad * 0.7;
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#eaf2ff";
+    if (showTitle && title) {
+      ctx.textBaseline = "alphabetic";
+      ctx.font = "600 " + fs + "px 'Inter', system-ui, sans-serif";
+      ctx.fillText(clip(ctx, name, textW), tx, ey - 2);
+      ctx.font = titleFs + "px 'Inter', system-ui, sans-serif";
+      ctx.fillStyle = "#9fb0d0";
+      ctx.fillText(clip(ctx, title, textW), tx, ey + titleFs + 1);
+    } else {
+      ctx.textBaseline = "middle";
+      ctx.fillText(clip(ctx, name, textW), tx, ey);
+    }
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  }
+
+  // Truncate text to a pixel width with an ellipsis (uses current ctx.font).
+  function clip(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    var t = text;
+    while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1);
+    return t + "…";
+  }
+
   /* ================= Engine (2D / 3D) ================= */
   var mode = "3d";
 
@@ -466,24 +634,10 @@
     };
     if (mode === "3d") {
       opts.personById = personById;
-      // Draw each seal live onto the scene. Level-of-detail keeps it fast:
-      // tiny/distant nodes get a cheap glowing orb, larger ones the full seal.
-      opts.drawNode = function (ctx, id, sx, sy, radius) {
-        var p = personById[id];
-        if (!p || !window.PQDepict) return;
-        if (radius < 8) {
-          var c = window.PQDepict.colorFor(p);
-          var gg = ctx.createRadialGradient(sx, sy, 0.5, sx, sy, radius * 1.7);
-          gg.addColorStop(0, c);
-          gg.addColorStop(1, "rgba(0,0,0,0)");
-          ctx.fillStyle = gg;
-          ctx.beginPath(); ctx.arc(sx, sy, radius * 1.7, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(sx, sy, radius * 0.62, 0, Math.PI * 2);
-          ctx.fillStyle = c; ctx.fill();
-        } else {
-          window.PQDepict.drawSeal(ctx, sx, sy, radius, p, { glow: true });
-        }
-      };
+      // Each person is a billboarded CARD: a glass tile carrying the
+      // seal and the floating name. Distant/dimmed nodes collapse to a
+      // glowing dot to keep the scene readable.
+      opts.drawNode = drawPersonCard;
       graph = new PQGraph3D(canvas, opts);
     } else {
       graph = new PQGraph(canvas, opts);
@@ -515,6 +669,7 @@
 
     renderArchetypes();
     renderLayers();
+    renderEraRibbon();
     renderPeopleList();
     renderStories();
 
@@ -524,12 +679,14 @@
     });
     document.getElementById("reset-btn").onclick = function () {
       state.activeArchetypes = {}; state.activeLayers = {}; state.search = "";
+      state.activeEra = null;
       state.selected = null;
       clearPath(true);
       document.getElementById("search").value = "";
       graph.setSelected(null);
       renderDetail(null);
       applyFilters();
+      updateHash();
       setTimeout(function () { graph.center(); }, 40);
     };
     document.getElementById("recenter-btn").onclick = function () {
@@ -591,6 +748,26 @@
     document.getElementById("stat-unnamed").textContent =
       DATA.people.filter(function (p) { return !p.named; }).length;
     document.getElementById("stat-stories").textContent = DATA.stories.length;
+
+    // Hero overlay + cinematic intro
+    var heroEnter = document.getElementById("hero-enter");
+    if (heroEnter) heroEnter.onclick = function () { hideHero(); if (graph.skipIntro) graph.skipIntro(); };
+    var canvasEl = document.getElementById("canvas");
+    if (canvasEl) canvasEl.addEventListener("pointerdown", hideHero, { once: true });
+
+    // Restore a shared view from the URL, otherwise play the intro.
+    var restored = applyHash();
+    if (restored) { hideHero(); }
+    else if (graph.startIntro) {
+      setTimeout(function () { if (mode === "3d") graph.startIntro(); }, 140);
+      setTimeout(hideHero, 5200);                 // hero lifts as the fly-through settles
+    } else { setTimeout(hideHero, 2500); }
+
+    // Keep the view in sync with back/forward navigation.
+    window.addEventListener("hashchange", function () {
+      if (!location.hash) return;
+      applyHash();
+    });
   }
 
   if (document.readyState === "loading") {

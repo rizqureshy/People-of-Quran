@@ -179,6 +179,28 @@
 
   PQGraph3D.prototype.setConstellations = function (on) { this.showConstellations = on; };
 
+  /* Kick off the cinematic intro fly-through from the current (home) view. */
+  PQGraph3D.prototype.startIntro = function () {
+    var home = { radius: this.radius, theta: this.theta, phi: this.phi };
+    this._intro = {
+      t: 0, dur: 6.5,
+      keys: [
+        { at: 0.00, radius: home.radius * 2.7, theta: home.theta - 1.6, phi: 0.40 },
+        { at: 0.42, radius: home.radius * 1.55, theta: home.theta - 0.55, phi: 0.98 },
+        { at: 0.74, radius: home.radius * 1.12, theta: home.theta + 0.25, phi: home.phi + 0.06 },
+        { at: 1.00, radius: home.radius, theta: home.theta, phi: home.phi }
+      ]
+    };
+    this.autoRotate = false;
+  };
+  PQGraph3D.prototype.skipIntro = function () {
+    if (!this._intro) return;
+    var last = this._intro.keys[this._intro.keys.length - 1];
+    this.radius = last.radius; this.theta = last.theta; this.phi = last.phi;
+    this._intro = null; this.autoRotate = true;
+    if (this.onIntroEnd) this.onIntroEnd();
+  };
+
   PQGraph3D.prototype.center = function () {
     // Frame the whole cloud and stop auto-rotate briefly.
     var c = this._centroid();
@@ -257,6 +279,24 @@
 
   /* ---- Camera basis & projection ---- */
   PQGraph3D.prototype._camera = function () {
+    // Cinematic intro: sweep through waypoints to the home view.
+    if (this._intro) {
+      var I = this._intro;
+      I.t += 0.016;
+      var k = Math.min(1, I.t / I.dur);
+      var keys = I.keys, seg = keys.length - 2;
+      for (var ki = 0; ki < keys.length - 1; ki++) {
+        if (k >= keys[ki].at && k <= keys[ki + 1].at) { seg = ki; break; }
+      }
+      var a = keys[seg], b = keys[seg + 1];
+      var local = (k - a.at) / ((b.at - a.at) || 1);
+      var e = 1 - Math.pow(1 - local, 3);           // easeOutCubic
+      this.radius = a.radius + (b.radius - a.radius) * e;
+      this.theta = a.theta + (b.theta - a.theta) * e;
+      this.phi = a.phi + (b.phi - a.phi) * e;
+      if (k >= 1) { this._intro = null; this.autoRotate = true; if (this.onIntroEnd) this.onIntroEnd(); }
+    }
+
     // Smoothly chase a focus target if one was requested.
     if (this._focus) {
       this.target.x += (this._focus.x - this.target.x) * 0.08;
@@ -264,7 +304,7 @@
       this.target.z += (this._focus.z - this.target.z) * 0.08;
       if (Math.abs(this._focus.x - this.target.x) < 1) this._focus = null;
     }
-    if (this.autoRotate && !this._dragging) this.theta += 0.0016;
+    if (this.autoRotate && !this._dragging && !this._intro) this.theta += 0.0016;
 
     var st = Math.sin(this.phi), ct = Math.cos(this.phi);
     var pos = v(
@@ -432,8 +472,8 @@
       if (isSel) { ctx.save(); ctx.shadowColor = "rgba(216,168,56,0.9)"; ctx.shadowBlur = 26; }
       try {
         if (this.drawNode) {
-          // Draw the seal live, directly onto the scene.
-          this.drawNode(ctx, node.id, proj.sx, proj.sy, rad);
+          // The app draws a billboarded card (seal + floating name) here.
+          this.drawNode(ctx, node.id, proj.sx, proj.sy, rad, { selected: isSel, hover: isHover, dim: dim });
         } else if (this.getSprite && this.getSprite(node.id)) {
           var sprite = this.getSprite(node.id);
           var size = rad * 2.4;
@@ -455,21 +495,25 @@
       if (isSel) ctx.restore();
       ctx.globalAlpha = 1;
 
-      // Labels for near / active nodes
-      var showLabel = !dim && (proj.scale > 0.7 || isSel || isHover);
-      if (showLabel) {
-        var fs = Math.max(10, Math.min(15, 12 * proj.scale));
-        ctx.font = (isSel || isHover ? "600 " : "") + fs + "px 'Inter', system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        ctx.globalAlpha = dim ? 0.2 : 0.95;
-        ctx.fillStyle = "#0a0c14";
-        ctx.fillText(node.name, proj.sx + 1, proj.sy + rad + 4); // shadow
-        ctx.fillStyle = "#ede7d6";
-        ctx.fillText(node.name, proj.sx, proj.sy + rad + 3);
-        ctx.globalAlpha = 1;
+      // When the app supplies drawNode, the card already carries the name.
+      // Otherwise fall back to a floating label for near/active nodes.
+      if (!this.drawNode) {
+        var showLabel = !dim && (proj.scale > 0.7 || isSel || isHover);
+        if (showLabel) {
+          var fs = Math.max(10, Math.min(15, 12 * proj.scale));
+          ctx.font = (isSel || isHover ? "600 " : "") + fs + "px 'Inter', system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.globalAlpha = dim ? 0.2 : 0.95;
+          ctx.fillStyle = "#0a0c14";
+          ctx.fillText(node.name, proj.sx + 1, proj.sy + rad + 4);
+          ctx.fillStyle = "#ede7d6";
+          ctx.fillText(node.name, proj.sx, proj.sy + rad + 3);
+          ctx.globalAlpha = 1;
+        }
       }
     }
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   };
 
   /* The luminous core at the centre of the universe — the divine light
@@ -571,6 +615,7 @@
     }
 
     c.addEventListener("mousedown", function (ev) {
+      self.skipIntro();
       var p = pos(ev);
       self._dragging = true; self._moved = 0;
       self._lastX = p.x; self._lastY = p.y; self._downAt = Date.now();
@@ -603,11 +648,13 @@
     });
     c.addEventListener("wheel", function (ev) {
       ev.preventDefault();
+      self.skipIntro();
       self.radius = Math.max(180, Math.min(2400, self.radius * Math.pow(1.0014, ev.deltaY)));
     }, { passive: false });
 
     // Touch
     c.addEventListener("touchstart", function (ev) {
+      self.skipIntro();
       var p = pos(ev);
       self._dragging = true; self._moved = 0; self.autoRotate = false;
       self._lastX = p.x; self._lastY = p.y;

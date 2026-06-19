@@ -19,11 +19,17 @@ and identities, not only names.**
 
 ## ✦ What you can do
 
-- **Fly through a 3D universe** — at its centre burns a **luminous golden core**
-  (the Qur'an, the light from which every story radiates); the families float
-  around it as distinct **clusters** in a deep-space field of drifting nebulae
-  and a multi-layer, twinkling star-field. Drag to orbit, scroll to zoom, click
-  a seal to explore. A one-click toggle drops back to a flat 2D canvas.
+- **Fly through a 3D universe** — a cinematic fly-through drops you in beside a
+  **luminous golden core** (the Qur'an, the light from which every story
+  radiates); the families float around it as distinct **clusters** in a
+  deep-space field of drifting nebulae and a multi-layer, twinkling star-field.
+  Each person is a **floating glass card** carrying their seal and name. Drag to
+  orbit, scroll to zoom, click a card to explore. A one-click toggle drops back
+  to a flat 2D canvas.
+- **Scrub the timeline** — a ribbon of eras (Beginnings → Patriarchs → Exodus →
+  Gospel → Mecca…) lets you light up one age of revelation at a time.
+- **Share what you find** — the selected person or an active path is encoded in
+  the URL; the 🔗 button copies a link that reopens the exact view.
 - **See each person depicted** — respectfully and aniconically. Islamic tradition
   does not depict the faces of the prophets (and the Prophet Muhammad is never
   depicted at all), so every person is given a unique, procedurally-generated
