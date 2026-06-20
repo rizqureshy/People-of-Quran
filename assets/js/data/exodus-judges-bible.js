@@ -366,24 +366,6 @@
         b("torah", "Dəlīlāh, who betrayed Shimshōn into the hands of the Pəlishtim for silver.", "Shofetim 16", "Tanakh")
       ],
       relations: [ r("samson", "opponent") ]
-    },
-    {
-      id: "eli", name: "Eli", title: "The Priest at Shiloh (Eli)",
-      named: false, era: "The Conquest & Judges", group: "The Conquest & Judges", depth: "minor",
-      names: { quran: "(not mentioned)", bible: "Eli", hebrew: "עֵלִי (ʿĒlī)" },
-      archetypes: ["advisor"],
-      story: [
-        "Eli was priest and judge at Shiloh, keeper of the sanctuary in the days before the kingdom. It was to him that the child Samuel — the Shamwīl of the Quranic tradition, the prophet who would later anoint Ṭālūt — was brought and under whom he was raised. Yet Eli failed to restrain the corruption of his own sons, and the priesthood passed from his house with the loss of the ark."
-      ],
-      lessons: ["He raised up a prophet but could not correct his own sons.",
-                "Leniency toward wrong in one's household can cost a whole inheritance."],
-      sources: ["bible", "torah", "tradition"],
-      entries: [
-        b("bible", "Eli, priest and judge at Shiloh, mentor of the boy Samuel, whose house was judged for the sins of his sons.", "1 Samuel 1–4", "1 Samuel"),
-        b("torah", "ʿĒlī ha-kohen, who ministered at Shiloh and under whom Shemuʼel was raised.", "Shemuʼel Aleph 1–4", "Tanakh"),
-        b("tradition", "Linked to the boyhood of Shamwīl (Samuel), the prophet who later appointed Ṭālūt as king.", "Ibn Kathir", "Tafsir")
-      ],
-      relations: [ r("shamwil", "teacher"), r("samson", "successor"), r("bani-israel", "ruler") ]
     }
 
   );

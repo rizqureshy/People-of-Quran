@@ -178,11 +178,14 @@ node -e "global.window={};require('./assets/js/data.js');
 
 ## ✦ Status & roadmap
 
-The dataset currently holds **110 people** — prophets, kings, believers,
-tyrants, families, nations and tribes, the Prophet's household and Companions —
-across the major narrative families (Adam, Nuh, Ibrahim, Yaqub & Yusuf, Musa &
-Egypt, Dawud & Sulayman, Maryam & Isa, the other prophets and sages), and many
-unnamed-but-pivotal figures.
+The dataset currently holds **222 people** — prophets, kings, patriarchs,
+matriarchs, judges, apostles, believers, tyrants, families, nations and tribes,
+the Prophet's household and Companions — spanning **the Quran, the whole Hebrew
+Bible / Torah, and the New Testament**: the patriarchal families (now complete,
+with Esau, Rebecca, the full Twelve Tribes…), the Exodus and the Judges, Ruth
+and the house of David, the divided kingdom and its prophets, the Babylonian
+exile and return, the Gospels and the apostolic age — alongside the Quran's own
+prophets, sages, and unnamed-but-pivotal figures.
 
 **Scope: everyone here is mentioned *or referenced* in the Quran, the Bible, or
 the Torah** — including those who are referenced but never named (Pharaoh's wife,

@@ -198,7 +198,7 @@
       id: "cyrus", name: "Cyrus the Great", title: "The Liberator of the Exiles (Cyrus)",
       named: false, era: "Exile & Return", group: "Exile & Return", depth: "supporting",
       names: { quran: "(unnamed)", bible: "Cyrus", hebrew: "כּוֹרֶשׁ (Kōreš)", tradition: "كورش (Kūrush)" },
-      archetypes: ["ruler", "reformer"],
+      archetypes: ["reformer", "truth-seeker"],
       story: [
         "Cyrus, king of Persia, overthrew Babylon and issued the decree that freed the captives of Judah to return to Jerusalem and rebuild the House of God. The scriptures honour him as God's instrument, called by name to set the exiles free and restore them to their land."
       ],
@@ -230,7 +230,7 @@
       id: "ahasuerus", name: "Ahasuerus", title: "The King of Persia in Esther's Days (Xerxes)",
       named: false, era: "Exile & Return", group: "Exile & Return", depth: "supporting",
       names: { quran: "(unnamed)", bible: "Ahasuerus", hebrew: "אֲחַשְׁוֵרוֹשׁ (ʼĂḥašwērōš)", tradition: "أحشويرش (Aḥshwīrush) · Xerxes" },
-      archetypes: ["ruler"],
+      archetypes: ["arrogant-elite"],
       story: [
         "Ahasuerus, the great king who ruled from India to Cush, deposed his queen Vashti and chose Esther in her place. Through her courage and the wisdom of Mordecai, his royal decree that would have destroyed the exiled people was overturned, and the plot of his vizier Haman was undone."
       ],
@@ -305,7 +305,7 @@
       id: "zerubbabel", name: "Zerubbabel", title: "The Governor Who Rebuilt the Temple (Zerubbabel)",
       named: false, era: "Exile & Return", group: "Exile & Return", depth: "supporting",
       names: { quran: "(unnamed)", bible: "Zerubbabel", hebrew: "זְרֻבָּבֶל (Zərubbāḇel)", tradition: "زربابل (Zarubābil)" },
-      archetypes: ["reformer", "ruler", "faithful-companion"],
+      archetypes: ["reformer", "faithful-companion"],
       story: [
         "Zerubbabel, of the royal line of David, led the first company of exiles back from Babylon and laid the foundation of the second temple. Encouraged by the prophets Haggai and Zechariah, he saw the House of God rebuilt — not by might nor by power, but by the Spirit of the Lord."
       ],
