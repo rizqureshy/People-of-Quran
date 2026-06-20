@@ -1248,6 +1248,9 @@
     archetypes: archetypes,
     relationTypes: relationTypes,
     people: people,
-    stories: stories
+    stories: stories,
+    // Helpers exposed so additional data files (assets/js/data/*.js) can
+    // register more people and patch existing ones in the same style.
+    b: b, r: r, enc: enc
   };
 })();
