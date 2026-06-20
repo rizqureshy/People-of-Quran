@@ -657,14 +657,30 @@
     setTimeout(function () { if (graph) graph.center(); }, 60);
   }
 
-  // Tiny corner badge so we can see which renderer is live (useful on phones).
-  function setRendererBadge(text, ok) {
+  // Corner badge showing which renderer is live. Tap it to reveal the full
+  // error text (useful for diagnosing on a phone with no console).
+  var _badgeFull = "", _badgeOpen = false;
+  function setRendererBadge(shortText, ok, full) {
+    _badgeFull = full || shortText;
     var el = document.getElementById("render-badge");
-    if (!el) { el = document.createElement("div"); el.id = "render-badge"; document.body.appendChild(el); }
-    el.textContent = text;
+    if (!el) {
+      el = document.createElement("div"); el.id = "render-badge";
+      document.body.appendChild(el);
+      el.addEventListener("click", function () {
+        _badgeOpen = !_badgeOpen;
+        el.textContent = _badgeOpen ? _badgeFull : el.getAttribute("data-short");
+        el.style.whiteSpace = _badgeOpen ? "normal" : "nowrap";
+        el.style.maxWidth = _badgeOpen ? "92vw" : "80vw";
+        el.style.fontSize = _badgeOpen ? "12px" : "11px";
+      });
+    }
+    el.setAttribute("data-short", shortText + (ok ? "" : "  (tap for details)"));
+    el.textContent = el.getAttribute("data-short");
+    _badgeOpen = false;
     el.style.cssText = "position:fixed;bottom:6px;right:8px;z-index:50;font:11px Inter,system-ui,sans-serif;" +
-      "color:" + (ok ? "#9fb0d0" : "#ffb4b4") + ";background:rgba(8,10,20,.6);padding:3px 9px;border-radius:8px;" +
-      "pointer-events:none;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+      "color:" + (ok ? "#9fb0d0" : "#ffb4b4") + ";background:rgba(8,10,20,.78);padding:4px 10px;border-radius:8px;" +
+      "cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);max-width:80vw;white-space:nowrap;" +
+      "overflow:hidden;text-overflow:ellipsis;border:1px solid rgba(150,170,230,.2);";
   }
 
   function buildEngine() {
@@ -685,7 +701,10 @@
         glFailed = true;
         try { if (glEngine && glEngine.stop) glEngine.stop(); } catch (e) {}
         glEngine = null;
-        setRendererBadge("renderer: Canvas — " + ((err && err.message) || "WebGL error"), false);
+        var where = window.__pqStep ? " [step: " + window.__pqStep + "]" : "";
+        var msg = (err && err.message) || String(err) || "WebGL error";
+        var full = "WebGL error" + where + ":\n" + msg + "\n\n" + ((err && err.stack) ? String(err.stack).split("\n").slice(0, 6).join("\n") : "");
+        setRendererBadge("renderer: Canvas" + where + " — " + msg, false, full);
         flashBanner("WebGL unavailable — using canvas mode");
         // fall through to the canvas engine below
       }

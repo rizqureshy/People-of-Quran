@@ -22,6 +22,11 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const GOLD = 0xf0c94e;
 
+// Records the current setup step so a failure can report exactly where it
+// happened (read by app.js when WebGL falls back). Invaluable for diagnosing
+// on a phone where there's no console.
+function step(s) { if (typeof window !== 'undefined') window.__pqStep = s; }
+
 /* ---------- small texture factories ---------- */
 function starTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -118,7 +123,9 @@ class PQGraphGL {
     this._time = 0;
 
     const W = canvas.clientWidth || 800, H = canvas.clientHeight || 600;
+    step('mobile-check');
     this._mobile = (typeof matchMedia !== 'undefined' && matchMedia('(max-width: 820px)').matches) || ('ontouchstart' in window && Math.min(W, H) < 820);
+    step('create-renderer');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: !this._mobile, alpha: false, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this._mobile ? 1.5 : 2));
     renderer.setSize(W, H, false);
@@ -127,6 +134,7 @@ class PQGraphGL {
     renderer.setClearColor(0x04050d, 1);
     this.renderer = renderer;
 
+    step('scene-camera');
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x04050d, 0.00072);
     this.scene = scene;
@@ -135,6 +143,7 @@ class PQGraphGL {
     camera.position.set(0, 240, 940);
     this.camera = camera;
 
+    step('controls');
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true; controls.dampingFactor = 0.08;
     controls.enablePan = false; controls.rotateSpeed = 0.7;
@@ -142,33 +151,34 @@ class PQGraphGL {
     controls.autoRotate = true; controls.autoRotateSpeed = 0.45;
     this.controls = controls;
 
-    // Lights (after the reference canvas)
+    step('lights');
     scene.add(new THREE.AmbientLight(0xb0c4ff, 0.6));
     const dir = new THREE.DirectionalLight(0xffffff, 0.85); dir.position.set(40, 60, 30); scene.add(dir);
     const rim = new THREE.PointLight(GOLD, 2.4, 2600); rim.position.set(0, 0, 0); scene.add(rim);
     const fill = new THREE.PointLight(0x6ff7ff, 0.9, 2600); fill.position.set(-260, 160, -220); scene.add(fill);
 
-    this._buildBackground();
-    this._buildCore();
+    step('background'); this._buildBackground();
+    step('core'); this._buildCore();
 
     // Post-processing: render -> bloom -> output
-    const composer = new EffectComposer(renderer);
+    step('composer'); const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), this._mobile ? 0.72 : 0.95, this._mobile ? 0.5 : 0.6, 0.55);
+    step('bloom'); const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), this._mobile ? 0.72 : 0.95, this._mobile ? 0.5 : 0.6, 0.55);
     composer.addPass(bloom);
-    composer.addPass(new OutputPass());
+    step('output-pass'); composer.addPass(new OutputPass());
     this.composer = composer; this.bloom = bloom;
 
     this._raycaster = new THREE.Raycaster();
     this._pointer = new THREE.Vector2();
-    this._bindEvents();
+    step('bind-events'); this._bindEvents();
 
     this._clock = new THREE.Clock();
     this._loop = this._loop.bind(this);
 
     // Probe render: surfaces any WebGL/driver failure synchronously so the
     // caller can fall back to the canvas engine instead of showing black.
-    this.composer.render();
+    step('probe-render'); this.composer.render();
+    step('done');
 
     requestAnimationFrame(this._loop);
   }
@@ -238,8 +248,10 @@ class PQGraphGL {
     // Subsequent calls (filter changes) only update dim states — keep layout.
     if (this._built) { this._applyDims(nodes); return; }
 
+    step('layout');
     const pos = this._computeLayout(nodes, edges);
     this.nodeList = nodes.slice();
+    step('cards');
     for (const n of nodes) {
       const p = this.personById[n.id];
       const card = cardTexture(p, this.depict);
@@ -257,10 +269,11 @@ class PQGraphGL {
 
     // Edges
     this.edges = edges.filter(e => this.nodeObjs[e.source] && this.nodeObjs[e.target]);
-    this._buildEdges();
-    this._buildConstellations();
+    step('edges'); this._buildEdges();
+    step('constellations'); this._buildConstellations();
     this._built = true;
     this._applyDims(nodes);
+    step('data-done');
   }
 
   _computeLayout(nodes, edges) {
