@@ -63,8 +63,7 @@
   // Eras in rough chronological order, for the timeline ribbon.
   var ERA_ORDER = [
     "Beginnings", "Early Prophets", "Patriarchs", "Exodus",
-    "Kingdom", "Gospel", "Other Prophets",
-    "Revelation in Mecca", "Revelation in Medina", "The Companions"
+    "Kingdom", "Gospel", "Other Prophets", "Revelation in Mecca"
   ];
 
   /* ---- Build graph node/edge spec from people ---- */

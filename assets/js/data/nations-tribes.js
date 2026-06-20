@@ -143,42 +143,14 @@
         enc("muhammad", "The tribe from which the Messenger arose and which both opposed and finally embraced him.", "Q 106:1"),
         enc("abu-lahab", "One of their chiefs whose hostility a whole surah answers.", "Q 111")
       ],
-      relations: [ r("muhammad", "kin", "the tribe of the Prophet"), r("banu-hashim", "kin", "their leading clan"), r("abu-lahab", "kin") ]
-    },
-    {
-      id: "banu-hashim",
-      name: "Banu Hashim",
-      title: "The Clan of the Prophet",
-      named: false,
-      era: "Revelation in Mecca",
-      group: "Nations & Tribes",
-      depth: "supporting",
-      isCommunity: true,
-      names: { quran: "بَنُو هَاشِم (Banū Hāshim)", tradition: "the clan of Hāshim within Quraysh" },
-      archetypes: ["faithful-companion", "truth-seeker"],
-      story: [
-        "Banu Hashim were the honoured clan of Quraysh entrusted with feeding and watering the pilgrims to the Kaʿba. From this house came the Prophet Muhammad, and it was his kinsmen of Banu Hashim — believers and unbelievers alike — who largely shielded him in his early mission, enduring with him the years of boycott in the valley. Within the same clan stood his bitterest opponent, his uncle Abu Lahab, whose enmity the Quran singles out. The clan thus holds together both the closest protection and the sharpest opposition the Prophet knew among his own blood."
-      ],
-      lessons: ["Kinship can be both a shield for truth and a test against it.",
-                "Loyalty of blood protected the messenger even before faith united them."],
-      sources: ["quran", "tradition", "historical"],
-      entries: [
-        b("quran", "The Quran addresses the Prophet's near kin, commanding him to warn his closest relations and condemning his uncle Abu Lahab by name.", "Q 26:214; Q 111:1–5", "Surahs al-Shuʿarāʼ, al-Masad"),
-        b("tradition", "The sīra recounts the social boycott of Banu Hashim by the other clans of Quraysh, and the protection extended to the Prophet by his uncle Abu Talib.", "Ibn Isḥāq / Ibn Hishām, Sīra", "Sira"),
-        b("historical", "Banu Hashim were a clan of Quraysh holding the offices of siqāya and rifāda — providing water and food for the pilgrims.", "Ibn Hishām; historical accounts", "History")
-      ],
-      encounters: [
-        enc("muhammad", "The clan into which the Prophet was born and which sheltered him.", "Q 26:214"),
-        enc("abu-lahab", "Their kinsman whose enmity the Quran rebukes.", "Q 111:1")
-      ],
-      relations: [ r("muhammad", "kin", "the Prophet's own clan"), r("quraysh", "kin", "a clan within Quraysh"), r("abu-lahab", "kin") ]
+      relations: [ r("muhammad", "kin", "the tribe of the Prophet"), r("abu-lahab", "kin") ]
     },
     {
       id: "asbat-bani-israil",
       name: "The Twelve Tribes of Israel",
       title: "The Children of Yaʿqub",
       named: true,
-      era: "House of Yaqub",
+      era: "Patriarchs",
       group: "Nations & Tribes",
       depth: "supporting",
       isCommunity: true,
