@@ -109,8 +109,10 @@ class PQGraphGL {
     this.canvas = canvas;
     this.onSelect = opts.onSelect || (() => {});
     this.onHover = opts.onHover || (() => {});
+    this.onExitFocus = opts.onExitFocus || (() => {});
     this.personById = opts.personById || {};
     this.depict = opts.depict || window.PQDepict;
+    this._tmpTar = new THREE.Vector3();
 
     this.nodeObjs = {};            // id -> { sprite, base, aspect, dim }
     this.nodeList = [];
@@ -267,7 +269,10 @@ class PQGraphGL {
       sprite.userData.id = n.id;
       sprite.renderOrder = 2;
       this.scene.add(sprite);
-      this.nodeObjs[n.id] = { sprite, base: new THREE.Vector3(P.x, P.y, P.z), bw: w, bh: h, dim: !!n.dim };
+      this.nodeObjs[n.id] = {
+        sprite, base: new THREE.Vector3(P.x, P.y, P.z), bw: w, bh: h, dim: !!n.dim,
+        targetPos: new THREE.Vector3(P.x, P.y, P.z), targetK: 1, curK: 1, targetOpacity: 1, curOpacity: 1
+      };
     }
 
     // Edges
@@ -391,17 +396,31 @@ class PQGraphGL {
     this._refreshNodeStates();
   }
   _refreshNodeStates() {
+    if (this._cascade) return;                 // cascade owns the targets while active
     const pathOn = !!this.pathSet;
     for (const id in this.nodeObjs) {
-      const o = this.nodeObjs[id], m = o.sprite.material;
-      let faded = o.dim || (pathOn && !this.pathSet[id]);
+      const o = this.nodeObjs[id];
+      const faded = o.dim || (pathOn && !this.pathSet[id]);
       const sel = id === this.selectedId || (pathOn && this.pathSet[id]);
-      m.opacity = faded ? 0.12 : 1;
-      const k = sel ? 1.32 : 1;
-      o.sprite.scale.set(o.bw * k, o.bh * k, 1);
+      o.targetPos.copy(o.base);
+      o.targetOpacity = faded ? 0.12 : 1;
+      o.targetK = sel ? 1.32 : 1;
       o.sprite.renderOrder = sel ? 5 : 2;
     }
     if (this._edgeLines) this._edgeLines.material.opacity = pathOn ? 0.04 : 0.16;
+  }
+
+  // Fluidly drive every sprite toward its current target (position/scale/opacity).
+  _animateNodes() {
+    for (const id in this.nodeObjs) {
+      const o = this.nodeObjs[id], s = o.sprite;
+      s.position.lerp(o.targetPos, 0.16);
+      o.curK += (o.targetK - o.curK) * 0.16;
+      o.curOpacity += (o.targetOpacity - o.curOpacity) * 0.16;
+      s.scale.set(o.bw * o.curK, o.bh * o.curK, 1);
+      s.material.opacity = o.curOpacity;
+    }
+    if (this._cascade && this._connLine) this._updateConnectors();
   }
   setSelected(id) { this.selectedId = id; this._refreshNodeStates(); }
 
@@ -441,6 +460,119 @@ class PQGraphGL {
     const o = this.nodeObjs[id]; if (!o) return;
     this._focus = { target: o.base.clone(), t: 0 };
     this.controls.autoRotate = false;
+  }
+
+  /* ---------- magnetic cascade: relationship navigator ----------
+   * Pulls the focus and its 1st/2nd/3rd-tier relations forward into a
+   * horizontal, column-by-tier layout facing the camera; everyone else
+   * recedes and fades. All motion is target-driven, so it is fluid, and
+   * clearCascade() animates everyone home again. */
+  focusCascade(focusId, tiers, opts) {
+    opts = opts || {};
+    if (!this.nodeObjs[focusId]) return;
+    if (!this._cascade) {
+      this._orbitPose = { pos: this.camera.position.clone(), target: this.controls.target.clone() };
+    }
+    this._cascade = true; this._focus = null;
+    this.controls.enabled = false; this.controls.autoRotate = false;
+    if (this._edgeLines) this._edgeLines.visible = false;
+    if (this._labelGroup) this._labelGroup.visible = false;
+    if (this._radiance) this._radiance.visible = false;
+    if (this._pathLine) this._pathLine.visible = false;
+
+    const colGap = 320, rowMax = 760;
+    const colX = [-1.5 * colGap, -0.5 * colGap, 0.5 * colGap, 1.5 * colGap];
+    const active = {};
+    const place = (id, x, y, k, order) => {
+      const o = this.nodeObjs[id]; if (!o) return;
+      o.targetPos.set(x, y, 0); o.targetK = k; o.targetOpacity = 1;
+      o.sprite.renderOrder = order; active[id] = true;
+    };
+    place(focusId, colX[0], 0, 1.5, 7);
+    let maxColH = rowMax * 0.2;
+    (tiers || []).forEach((list, ti) => {
+      const t = ti + 1, N = list.length;
+      const gap = N > 1 ? Math.min(120, rowMax / N) : 120;
+      const k = t === 1 ? 1.18 : t === 2 ? 1.0 : 0.86;
+      list.forEach((id, i) => place(id, colX[t], (i - (N - 1) / 2) * gap, k, 6 - ti));
+      if (N) maxColH = Math.max(maxColH, (N - 1) * gap + 130);
+    });
+
+    // Connector threads: focus → tier1 → tier2 → tier3 (BFS parent pairs).
+    this._buildConnectors((opts.pairs || []).filter(pr => active[pr[0]] && active[pr[1]]));
+
+    // Everyone else recedes and fades (kept at home so they return fluidly).
+    for (const id in this.nodeObjs) {
+      if (active[id]) continue;
+      const o = this.nodeObjs[id];
+      o.targetPos.copy(o.base); o.targetOpacity = 0.03; o.targetK = 0.4; o.sprite.renderOrder = 1;
+    }
+
+    // Frame the layout front-on; shift right so it clears the detail drawer.
+    const W = this.canvas.clientWidth || 1, H = this.canvas.clientHeight || 1;
+    const aspect = Math.max(0.5, W / H);
+    const tanH = Math.tan(this.camera.fov * Math.PI / 360);
+    const needH = Math.max(maxColH / 2 + 90, 300);
+    const needW = 1.5 * colGap + 220;
+    const D = Math.max(needH / tanH, needW / (aspect * tanH)) * 1.06;
+    const halfW = D * tanH * aspect;
+    const shiftX = (opts.drawerPx ? (opts.drawerPx * halfW / W) : 0);
+    this._camTween = {
+      fromPos: this.camera.position.clone(), toPos: new THREE.Vector3(shiftX, 0, D),
+      fromTar: this.controls.target.clone(), toTar: new THREE.Vector3(shiftX, 0, 0),
+      t: 0, dur: 0.85
+    };
+  }
+
+  clearCascade() {
+    if (!this._cascade) return;
+    this._cascade = false;
+    if (this._edgeLines) this._edgeLines.visible = true;
+    if (this._labelGroup) this._labelGroup.visible = this.showConstellations !== false;
+    if (this._radiance) this._radiance.visible = true;
+    if (this._pathLine) this._pathLine.visible = true;
+    if (this._connLine) this._connLine.visible = false;
+    this._refreshNodeStates();              // targets back to home
+    const pose = this._orbitPose || { pos: new THREE.Vector3(0, 240, 940), target: new THREE.Vector3(0, 0, 0) };
+    this._camTween = {
+      fromPos: this.camera.position.clone(), toPos: pose.pos.clone(),
+      fromTar: this.controls.target.clone(), toTar: pose.target.clone(),
+      t: 0, dur: 0.85, onDone: () => { this.controls.enabled = true; this.controls.autoRotate = true; }
+    };
+  }
+
+  _buildConnectors(pairs) {
+    this._connPairs = pairs;
+    if (this._connLine) { this.scene.remove(this._connLine); this._connLine.geometry.dispose(); this._connLine = null; }
+    if (!pairs.length) return;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pairs.length * 6), 3));
+    this._connLine = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+      color: GOLD, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false
+    }));
+    this._connLine.renderOrder = 0;
+    this.scene.add(this._connLine);
+    this._updateConnectors();
+  }
+  _updateConnectors() {
+    if (!this._connLine || !this._connPairs) return;
+    const arr = this._connLine.geometry.attributes.position.array;
+    for (let i = 0; i < this._connPairs.length; i++) {
+      const a = this.nodeObjs[this._connPairs[i][0]], b = this.nodeObjs[this._connPairs[i][1]];
+      if (!a || !b) continue;
+      arr[i * 6] = a.sprite.position.x; arr[i * 6 + 1] = a.sprite.position.y; arr[i * 6 + 2] = a.sprite.position.z;
+      arr[i * 6 + 3] = b.sprite.position.x; arr[i * 6 + 4] = b.sprite.position.y; arr[i * 6 + 5] = b.sprite.position.z;
+    }
+    this._connLine.geometry.attributes.position.needsUpdate = true;
+  }
+  _applyCamTween(dt) {
+    const T = this._camTween; T.t = Math.min(1, T.t + dt / T.dur);
+    const e = 1 - Math.pow(1 - T.t, 3);
+    this.camera.position.lerpVectors(T.fromPos, T.toPos, e);
+    this._tmpTar.lerpVectors(T.fromTar, T.toTar, e);
+    this.controls.target.copy(this._tmpTar);
+    this.camera.lookAt(this._tmpTar);
+    if (T.t >= 1) { this._camTween = null; if (T.onDone) T.onDone(); }
   }
 
   /* ---------- cinematic intro ---------- */
@@ -498,6 +630,7 @@ class PQGraphGL {
       if (Math.abs(ev.clientX - downX) + Math.abs(ev.clientY - downY) < 6) {
         setPointer(ev); const id = this._pick();
         if (id) { this.selectedId = id; this._refreshNodeStates(); this.onSelect(id); }
+        else if (this._cascade) { this.onExitFocus(); }   // tap empty space to return to the galaxy
       }
     });
     window.addEventListener('resize', () => this._resize());
@@ -522,12 +655,16 @@ class PQGraphGL {
     this._time += dt;
     try {
       if (this._intro) this._applyIntro(dt);
-      else this.controls.update();
-
-      if (this._focus) {
-        this.controls.target.lerp(this._focus.target, 0.08);
-        this._focus.t += dt; if (this._focus.t > 1.2) this._focus = null;
+      else if (this._camTween) this._applyCamTween(dt);
+      else if (this._cascade) { /* hold the front-on view */ }
+      else {
+        this.controls.update();
+        if (this._focus) {
+          this.controls.target.lerp(this._focus.target, 0.08);
+          this._focus.t += dt; if (this._focus.t > 1.2) this._focus = null;
+        }
       }
+      this._animateNodes();
       // Core shimmer
       const pulse = 1 + 0.05 * Math.sin(this._time * 1.4);
       if (this.core) { this.core.scale.setScalar(pulse); this._coreShell.rotation.y += dt * 0.25; this._coreShell.rotation.x += dt * 0.12; }

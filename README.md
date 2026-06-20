@@ -1,4 +1,4 @@
-# People of the Quran
+# People of Scriptures
 
 > A living, interconnected knowledge universe of every human being mentioned,
 > referenced, implied, or connected to the Quran.

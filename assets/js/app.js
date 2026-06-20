@@ -356,6 +356,7 @@
 
     d.querySelector(".detail-close").onclick = function () {
       state.selected = null;
+      if (graph.clearCascade) graph.clearCascade();
       graph.setSelected(null);
       renderDetail(null);
       renderPeopleList();
@@ -390,10 +391,53 @@
     if (state.pathMode) { pathPick(id); }
     state.selected = id;
     graph.setSelected(id);
-    if (focus) graph.focusNode(id);
+    // Magnetic cascade: pull this person's 1st/2nd/3rd-tier relations forward.
+    if (graph.focusCascade && !state.pathMode && !state.activePath) {
+      var cd = cascadeData(id);
+      var drawerPx = (typeof window !== "undefined" && window.innerWidth > 900) ? 380 : 0;
+      graph.focusCascade(id, cd.tiers, { pairs: cd.pairs, drawerPx: drawerPx });
+      if (!state._cascadeHinted) { state._cascadeHinted = true; flashBanner("Relationship view — tap a card to follow · tap empty space to return"); }
+    } else if (focus && graph.focusNode) {
+      graph.focusNode(id);
+    }
     renderDetail(p);
     renderPeopleList();
     if (!state.activePath) updateHash();
+  }
+
+  // Leave cascade mode and return to the galaxy.
+  function exitFocus() {
+    state.selected = null;
+    if (graph.clearCascade) graph.clearCascade();
+    if (graph.setSelected) graph.setSelected(null);
+    renderDetail(null);
+    renderPeopleList();
+    if (!state.activePath) updateHash();
+  }
+
+  // Breadth-first tiers (1,2,3) of relations around a focus, with the
+  // parent→child pairs used to draw the connector threads.
+  function cascadeData(focusId) {
+    var adj = adjacency();
+    var seen = {}; seen[focusId] = 0;
+    var tiers = [[], [], []], pairs = [];
+    var frontier = [focusId];
+    for (var depth = 1; depth <= 3; depth++) {
+      var next = [];
+      frontier.forEach(function (pid) {
+        (adj[pid] || []).forEach(function (nid) {
+          if (seen[nid] !== undefined) return;
+          seen[nid] = depth; tiers[depth - 1].push(nid); pairs.push([pid, nid]); next.push(nid);
+        });
+      });
+      frontier = next;
+    }
+    var CAP = 14;
+    tiers = tiers.map(function (t) { return t.slice(0, CAP); });
+    var keep = {}; keep[focusId] = true;
+    tiers.forEach(function (t) { t.forEach(function (id) { keep[id] = true; }); });
+    pairs = pairs.filter(function (pr) { return keep[pr[0]] && keep[pr[1]]; });
+    return { tiers: tiers, pairs: pairs };
   }
 
   /* ---- Path finding between two people ---- */
@@ -696,7 +740,7 @@
   var glFailed = false;  // WebGL/Three.js unavailable or errored -> use canvas
 
   function baseOpts() {
-    return { onSelect: function (id) { select(id, false); }, onHover: onHover };
+    return { onSelect: function (id) { select(id, false); }, onHover: onHover, onExitFocus: exitFocus };
   }
 
   // Push current data/state into whichever engine `graph` points to.
@@ -834,6 +878,7 @@
       state.activeArchetypes = {}; state.activeLayers = {}; state.search = "";
       state.activeEra = null;
       state.selected = null;
+      if (graph.clearCascade) graph.clearCascade();
       clearPath(true);
       document.getElementById("search").value = "";
       graph.setSelected(null);
@@ -843,6 +888,7 @@
       setTimeout(function () { graph.center(); }, 40);
     };
     document.getElementById("recenter-btn").onclick = function () {
+      if (graph.clearCascade) graph.clearCascade();
       if (graph.setAutoRotate) graph.setAutoRotate(true);
       graph.center();
     };
