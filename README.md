@@ -70,12 +70,30 @@ and identities, not only names.**
 No build step, no dependencies, no network required. Either:
 
 ```bash
-# Just open the file
-open index.html            # macOS    (or: xdg-open index.html on Linux)
-
-# …or serve it (nicer for some browsers)
+# Serve it locally (recommended — the WebGL view needs http, not file://)
 python3 -m http.server 8000   # then visit http://localhost:8000
+
+# Opening index.html directly also works, but only the 2D / canvas fallback
+# loads from file:// (browsers block ES modules — and therefore Three.js —
+# over file://). For the WebGL + bloom universe, use a server or GitHub Pages.
 ```
+
+## ✦ View it on your phone
+
+The WebGL universe needs an `https` origin, so the easiest way to open it on a
+phone is **GitHub Pages**:
+
+1. In this repo on GitHub, open **Settings → Pages**.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+
+That's the only manual step. The included workflow
+(`.github/workflows/pages.yml`) then deploys on every push, and the site is live at:
+
+> **https://rizqureshy.github.io/people-of-quran/**
+
+Open that on your phone, tap **Enter the universe**, and orbit with one finger
+(pinch to zoom, tap a card to explore). If a device can't run WebGL it falls
+back to the canvas mode automatically.
 
 ## ✦ How it is built
 
