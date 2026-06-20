@@ -644,41 +644,63 @@
   var glEngine = null;   // the WebGL engine persists (one GL context)
   var glFailed = false;  // WebGL/Three.js unavailable or errored -> use canvas
 
-  function buildEngine() {
-    var opts = {
-      onSelect: function (id) { select(id, false); },
-      onHover: onHover
-    };
-    var useGL = mode === "3d" && window.PQGraphGL && !glFailed;
-    if (useGL) {
-      // Full WebGL universe with real bloom (Three.js). Built once, reused.
-      try {
-        showCanvas("gl");
-        if (!glEngine) {
-          opts.personById = personById; opts.depict = window.PQDepict;
-          glEngine = new window.PQGraphGL(document.getElementById("canvas-gl"), opts);
-        } else { glEngine.resume(); }
-        graph = glEngine;
-      } catch (err) {
-        if (window.console) console.error("WebGL engine failed — falling back to canvas:", err);
-        glFailed = true; glEngine = null; useGL = false;
-        flashBanner("WebGL unavailable — using canvas mode");
-      }
-    }
-    if (!useGL && mode === "3d") {
-      // Fallback: dependency-free canvas 3D, people as cards.
-      showCanvas("2d");
-      opts.personById = personById; opts.drawNode = drawPersonCard;
-      graph = new PQGraph3D(document.getElementById("canvas"), opts);
-    } else if (!useGL) {
-      showCanvas("2d");
-      graph = new PQGraph(document.getElementById("canvas"), opts);
-    }
-    applyFilters();                       // pushes current node/edge state
+  function baseOpts() {
+    return { onSelect: function (id) { select(id, false); }, onHover: onHover };
+  }
+
+  // Push current data/state into whichever engine `graph` points to.
+  function pushEngineState() {
+    applyFilters();                       // builds nodes/edges (heavy for WebGL)
     if (state.selected) graph.setSelected(state.selected);
     if (state.activePath && graph.setPath) graph.setPath(state.activePath);
     if (graph.setConstellations) graph.setConstellations(state.constellations);
-    setTimeout(function () { graph.center(); }, 60);
+    setTimeout(function () { if (graph) graph.center(); }, 60);
+  }
+
+  // Tiny corner badge so we can see which renderer is live (useful on phones).
+  function setRendererBadge(text, ok) {
+    var el = document.getElementById("render-badge");
+    if (!el) { el = document.createElement("div"); el.id = "render-badge"; document.body.appendChild(el); }
+    el.textContent = text;
+    el.style.cssText = "position:fixed;bottom:6px;right:8px;z-index:50;font:11px Inter,system-ui,sans-serif;" +
+      "color:" + (ok ? "#9fb0d0" : "#ffb4b4") + ";background:rgba(8,10,20,.6);padding:3px 9px;border-radius:8px;" +
+      "pointer-events:none;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+  }
+
+  function buildEngine() {
+    // Try the WebGL universe first; ANY failure (construction OR the first
+    // data push that builds 60 card textures) cleanly falls back to canvas.
+    if (mode === "3d" && window.PQGraphGL && !glFailed) {
+      try {
+        showCanvas("gl");
+        var opts = baseOpts(); opts.personById = personById; opts.depict = window.PQDepict;
+        if (!glEngine) glEngine = new window.PQGraphGL(document.getElementById("canvas-gl"), opts);
+        else glEngine.resume();
+        graph = glEngine;
+        pushEngineState();
+        setRendererBadge("renderer: WebGL ✦", true);
+        return;
+      } catch (err) {
+        if (window.console) console.error("WebGL failed — falling back to canvas:", err);
+        glFailed = true;
+        try { if (glEngine && glEngine.stop) glEngine.stop(); } catch (e) {}
+        glEngine = null;
+        setRendererBadge("renderer: Canvas — " + ((err && err.message) || "WebGL error"), false);
+        flashBanner("WebGL unavailable — using canvas mode");
+        // fall through to the canvas engine below
+      }
+    } else if (mode === "3d" && !window.PQGraphGL) {
+      setRendererBadge("renderer: Canvas — Three.js module not loaded (open over http?)", false);
+    }
+    if (mode === "3d") {
+      showCanvas("2d");
+      var o3 = baseOpts(); o3.personById = personById; o3.drawNode = drawPersonCard;
+      graph = new PQGraph3D(document.getElementById("canvas"), o3);
+    } else {
+      showCanvas("2d");
+      graph = new PQGraph(document.getElementById("canvas"), baseOpts());
+    }
+    pushEngineState();
   }
 
   function switchMode(next) {
@@ -697,7 +719,35 @@
   }
 
   /* ================= Init ================= */
+  // Wire the hero overlay FIRST, so "Enter the universe" always works even
+  // if engine/UI setup later fails. enterUniverse only needs to hide the hero.
+  function wireHero() {
+    function enterUniverse() { hideHero(); if (graph && graph.skipIntro) graph.skipIntro(); }
+    window.__pqEnter = enterUniverse;
+    var heroEl = document.getElementById("hero");
+    if (heroEl) {
+      heroEl.addEventListener("click", enterUniverse);
+      heroEl.addEventListener("touchend", function (e) { if (e && e.cancelable) e.preventDefault(); enterUniverse(); }, { passive: false });
+    }
+    var heroEnter = document.getElementById("hero-enter");
+    if (heroEnter) {
+      heroEnter.onclick = function (e) { if (e && e.stopPropagation) e.stopPropagation(); enterUniverse(); };
+      heroEnter.addEventListener("touchend", function (e) { if (e && e.cancelable) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); enterUniverse(); }, { passive: false });
+    }
+  }
+
   function init() {
+    wireHero();                 // guarantee the Enter button responds
+    try {
+      setupApp();
+    } catch (err) {
+      if (window.console) console.error("Init error:", err);
+      var b = document.getElementById("banner");
+      if (b) { b.textContent = "Setup error — open anyway"; b.classList.add("show"); }
+    }
+  }
+
+  function setupApp() {
     buildEngine();
 
     renderArchetypes();
@@ -782,17 +832,8 @@
       DATA.people.filter(function (p) { return !p.named; }).length;
     document.getElementById("stat-stories").textContent = DATA.stories.length;
 
-    // Hero overlay + cinematic intro. Tap/click anywhere on the hero enters.
-    function enterUniverse() { hideHero(); if (graph && graph.skipIntro) graph.skipIntro(); }
-    var heroEl = document.getElementById("hero");
-    if (heroEl) {
-      heroEl.addEventListener("click", enterUniverse);
-      heroEl.addEventListener("touchend", function (e) { if (e && e.cancelable) e.preventDefault(); enterUniverse(); }, { passive: false });
-    }
-    var heroEnter = document.getElementById("hero-enter");
-    if (heroEnter) heroEnter.onclick = function (e) { if (e && e.stopPropagation) e.stopPropagation(); enterUniverse(); };
-
-    // Restore a shared view from the URL, otherwise play the intro.
+    // Hero is already wired in wireHero(). Restore a shared view from the URL,
+    // otherwise play the cinematic intro.
     var restored = applyHash();
     if (restored) { hideHero(); }
     else if (graph.startIntro) {
