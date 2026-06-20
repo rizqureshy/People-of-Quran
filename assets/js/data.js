@@ -22,22 +22,29 @@
    * Knowledge layers — where a piece of information originates.
    * Order roughly reflects proximity to the Quranic text.
    * ---------------------------------------------------------------- */
+  // Source TIERS, in the order they should always be read:
+  // Quran → Bible → Torah → Tradition → Historical.
   const layers = [
     { id: "quran", label: "Quran", short: "Q", color: "#1f9d76",
       desc: "Stated or directly referenced in the Quranic text." },
-    { id: "hadith", label: "Hadith", short: "H", color: "#3a7ca5",
-      desc: "Reported in the recorded traditions of the Prophet Muhammad." },
-    { id: "tafsir", label: "Classical Tafsir", short: "T", color: "#9b5de5",
-      desc: "Drawn from classical Quranic exegesis (e.g. al-Tabari, Ibn Kathir)." },
-    { id: "biblical", label: "Biblical Tradition", short: "B", color: "#c77dff",
-      desc: "Parallel narratives in the Hebrew Bible and the Gospels." },
-    { id: "jewish", label: "Jewish Tradition", short: "J", color: "#e07a5f",
-      desc: "Midrashic and rabbinic traditions connected to shared narratives." },
-    { id: "historical", label: "Historical Scholarship", short: "Hi", color: "#c69121",
-      desc: "Historical and biographical scholarship (sira, history)." },
-    { id: "academic", label: "Academic Research", short: "A", color: "#6c757d",
-      desc: "Modern academic and comparative-religion research." }
+    { id: "bible", label: "Bible", short: "B", color: "#3a7ca5",
+      desc: "Parallel narratives in the Christian scriptures — the Old Testament and the Gospels." },
+    { id: "torah", label: "Torah & Tanakh", short: "T", color: "#c77dff",
+      desc: "The Jewish scriptures — the Torah (Pentateuch) and the wider Hebrew Bible." },
+    { id: "tradition", label: "Tradition", short: "Tr", color: "#e07a5f",
+      desc: "Hadith, classical tafsir, midrash, isrāʼīliyyāt and church tradition." },
+    { id: "historical", label: "Historical", short: "Hi", color: "#c69121",
+      desc: "Historical, biographical and academic scholarship (sīra, history, comparative study)." }
   ];
+
+  // Legacy source ids map into the five tiers above, so older entries keep
+  // working and everything renders in the canonical order.
+  const legacyTier = {
+    quran: "quran", bible: "bible", biblical: "bible", torah: "torah",
+    jewish: "torah", tanakh: "torah", hadith: "tradition", tafsir: "tradition",
+    tradition: "tradition", midrash: "tradition", historical: "historical",
+    academic: "historical"
+  };
 
   /* ----------------------------------------------------------------
    * Archetypes — recurring human patterns across revelation.
@@ -85,8 +92,12 @@
    * Helper to keep person records compact and readable.
    * b(layer, text, ref) -> a sourced statement ("knowledge entry").
    */
-  function b(layer, text, ref) { return { layer: layer, text: text, ref: ref || "" }; }
+  // b(layer, text, ref, sub) — a sourced statement. `sub` names the specific
+  // source within the tier (e.g. "Sahih al-Bukhari", "Genesis", "Ibn Kathir").
+  function b(layer, text, ref, sub) { return { layer: layer, text: text, ref: ref || "", sub: sub || "" }; }
   function r(to, type, note) { return { to: to, type: type, note: note || "" }; }
+  // enc(withId, moment, ref) — a key encounter or historic moment.
+  function enc(withId, moment, ref) { return { with: withId, moment: moment, ref: ref || "" }; }
 
   /* ----------------------------------------------------------------
    * People — the core of the universe.
@@ -95,18 +106,30 @@
     /* ===================== ADAM'S FAMILY ===================== */
     {
       id: "adam", name: "Adam", title: "The First Human",
-      named: true, era: "Beginnings", group: "Adam's Family",
-      names: { quran: "آدَم (Ādam)", biblical: "Adam" },
+      named: true, era: "Beginnings", group: "Adam's Family", depth: "major",
+      names: { quran: "آدَم (Ādam)", bible: "Adam", hebrew: "אָדָם (ʼĀdām)" },
       archetypes: ["prophet", "repentant"],
-      lessons: ["The first sin met the first repentance.",
-                "Knowledge of the names elevated humanity above the angels."],
-      sources: ["quran", "hadith", "tafsir", "biblical"],
-      entries: [
-        b("quran", "Created by God, taught the names of all things, and honoured by the prostration of the angels. After eating from the tree he repented and was forgiven.", "Q 2:30–37"),
-        b("biblical", "Formed from the dust of the ground; given dominion over the garden.", "Genesis 2"),
-        b("hadith", "Described as created tall, and as the father from whom all humanity descends.", "Sahih al-Bukhari")
+      story: [
+        "Before there were nations there was a single being, shaped by God's own hand and quickened with His spirit. When God announced that He would place a successor — a khalīfa — upon the earth, the angels wondered that He would entrust it to one who might spill blood; God answered, 'I know what you do not know.'",
+        "He was taught the names of all things, a knowledge the angels could not match, and at God's command they bowed before him — all but Iblīs, who refused out of pride. Placed in the Garden with his mate, Adam was warned away from a single tree. Whispered to by the deceiver, he ate, and shame and exile followed. Yet the same lapse became the first act of return: he received words of repentance from his Lord and was forgiven.",
+        "From him descends all of humanity, and from his two sons comes the first story of brotherhood broken. Adam is remembered not as a fallen creature but as the first to sin and the first to turn back — the pattern of the human being who errs and repents."
       ],
-      relations: [ r("hawwa", "spouse"), r("habil", "parent"), r("qabil", "parent"), r("iblis", "opponent") ]
+      lessons: ["The first sin met the first repentance.",
+                "Knowledge of the names elevated humanity above the angels.",
+                "To err is human; to turn back is the beginning of guidance."],
+      sources: ["quran", "bible", "torah", "tradition"],
+      entries: [
+        b("quran", "Created by God, taught the names of all things, and honoured by the prostration of the angels. Warned from one tree, he ate at Satan's whisper, then received words of repentance and was forgiven and guided.", "Q 2:30–37; Q 7:11–25; Q 20:115–122", "Surahs al-Baqarah, al-Aʿrāf, Ṭā Hā"),
+        b("bible", "Formed from the dust of the ground and given the breath of life; set in Eden to tend it, given dominion, and named the living creatures.", "Genesis 1–3", "Genesis"),
+        b("torah", "In Bereshit, ʼĀdām is made in the image of God, male and female; his name echoes adamah, the earth from which he is drawn.", "Bereshit 1–3", "Torah"),
+        b("tradition", "Reported created tall (sixty cubits), the father of humankind; his repentance and God's mercy are dwelt upon at length by the commentators.", "Sahih al-Bukhari 3326; al-Tabari", "Hadith · Tafsir")
+      ],
+      encounters: [
+        enc("iblis", "The refusal to prostrate — pride against the honoured creature.", "Q 7:11–13"),
+        enc("hawwa", "Dwelling together in the Garden, and the shared lapse and repentance.", "Q 7:19–23"),
+        enc("habil", "Father to the first offering accepted by God.", "Q 5:27")
+      ],
+      relations: [ r("hawwa", "spouse"), r("sheth", "parent"), r("habil", "parent"), r("qabil", "parent"), r("iblis", "opponent") ]
     },
     {
       id: "hawwa", name: "Hawwa", title: "The First Woman (Eve)",
@@ -170,15 +193,28 @@
       id: "nuh", name: "Nuh", title: "The Prophet of the Flood (Noah)",
       named: true, era: "Early Prophets", group: "Nuh's People",
       names: { quran: "نُوح (Nūḥ)", biblical: "Noah" },
-      archetypes: ["prophet", "reformer"],
-      lessons: ["He preached for centuries with few who believed.",
-                "Lineage cannot save where faith is absent — even a prophet's son drowned."],
-      sources: ["quran", "hadith", "tafsir", "biblical"],
-      entries: [
-        b("quran", "Called his people for 950 years; built the ark by revelation; saved the believers from the flood.", "Q 71, Q 11:25–48"),
-        b("biblical", "Builds the ark and survives the flood with his family and the animals.", "Genesis 6–9")
+      archetypes: ["prophet", "reformer"], depth: "major",
+      story: [
+        "Ten generations after Adam, the earth had filled with idols and injustice. To it God sent Nūḥ, who called his people night and day, in secret and in the open, for nine hundred and fifty years. They answered him with mockery, stopping their ears and demanding he bring on the punishment he warned of.",
+        "At God's command he built a great ship on dry land while the people jeered. When the ovens overflowed and the heavens opened, he carried aboard the believers and a pair of every kind. His own son refused, trusting a mountain to save him from the water, and was among the drowned — a sign that nearness to a prophet saves no one whose heart rejects.",
+        "When the waters receded the ark came to rest, and humanity began again from those who believed. Nūḥ is counted among the five mightiest messengers (ūlū al-ʿazm), the second father of mankind."
       ],
-      relations: [ r("nuh-wife", "spouse"), r("nuh-son", "parent"), r("adam", "descendant") ]
+      lessons: ["He preached for centuries with few who believed.",
+                "Lineage cannot save where faith is absent — even a prophet's son drowned.",
+                "Patience in calling to truth is measured in lifetimes, not days."],
+      sources: ["quran", "bible", "torah", "tradition"],
+      entries: [
+        b("quran", "Called his people for 950 years; built the ark by revelation; was saved with the believers while the rejecters, including his own son, drowned.", "Q 71; Q 11:25–48; Q 29:14", "Surah Nūḥ, Hūd"),
+        b("bible", "Noah, a righteous man, builds the ark and survives the flood with his family and the animals; God sets the rainbow as a covenant.", "Genesis 6–9", "Genesis"),
+        b("torah", "In Bereshit, Noaḥ walks with God amid a corrupt generation and is preserved through the mabbul (deluge).", "Bereshit 6–9", "Torah"),
+        b("tradition", "Named among the ūlū al-ʿazm; on the Day of Judgement he is the first messenger to whom the people turn, in the ḥadīth of intercession.", "Sahih al-Bukhari 4712", "Hadith")
+      ],
+      encounters: [
+        enc("nuh-son", "The plea at the ark — 'Embark with us' — and the son's fatal refusal.", "Q 11:42–43"),
+        enc("nuh-wife", "A wife within the household who sided with the rejecters.", "Q 66:10"),
+        enc("hud", "A forerunner among the warner-prophets sent after him to Ād.", "Q 7:65")
+      ],
+      relations: [ r("nuh-wife", "spouse"), r("nuh-son", "parent"), r("idris", "descendant"), r("adam", "descendant") ]
     },
     {
       id: "nuh-wife", name: "Wife of Nuh", title: "The Betraying Spouse",
@@ -210,17 +246,30 @@
     /* ===================== IBRAHIM'S FAMILY ===================== */
     {
       id: "ibrahim", name: "Ibrahim", title: "The Friend of God (Abraham)",
-      named: true, era: "Patriarchs", group: "Ibrahim's Family",
-      names: { quran: "إِبْرَاهِيم (Ibrāhīm)", biblical: "Abraham", title: "Khalīl Allāh" },
+      named: true, era: "Patriarchs", group: "Ibrahim's Family", depth: "major",
+      names: { quran: "إِبْرَاهِيم (Ibrāhīm)", bible: "Abraham", hebrew: "אַבְרָהָם (ʼAvrāhām)", tradition: "Khalīl Allāh — the Friend of God" },
       archetypes: ["prophet", "truth-seeker", "reformer"],
+      story: [
+        "As a youth among idol-worshippers, Ibrāhīm watched a star, then the moon, then the sun rise and set, and reasoned past them all: 'I do not love things that set.' He turned to the One who made them. When his people left their idols to a festival, he shattered them and laid the axe on the largest — then asked the furious crowd why they worshipped what could not even defend itself.",
+        "Cast into a fire for his defiance, he was unharmed — God commanded, 'Be coolness and peace for Ibrāhīm.' He debated the tyrant-king who claimed to give life and death, silencing him with the rising sun. Called to leave his land, he settled his wife Hājar and infant Ismāʿīl in a barren valley by God's command, and there the well of Zamzam sprang and Mecca grew.",
+        "His faith was tried to its limit when he saw in a dream that he must sacrifice his son; both submitted, and at the last moment God ransomed the boy with a great sacrifice. With Ismāʿīl he raised the foundations of the Kaaba, praying that a messenger arise from their descendants — a prayer answered, in Muslim belief, in Muhammad. Through Ismāʿīl and Isḥāq he became the father of nations and is honoured across Judaism, Christianity and Islam."
+      ],
       lessons: ["He reasoned his way from the stars to the One who set them.",
                 "He was ready to surrender even his son, and was ransomed.",
-                "A father of nations through two sons, two peoples."],
-      sources: ["quran", "hadith", "tafsir", "biblical", "jewish"],
+                "A father of nations through two sons, two peoples.",
+                "True submission holds nothing back, not even what is most beloved."],
+      sources: ["quran", "bible", "torah", "tradition"],
       entries: [
-        b("quran", "Broke his people's idols, debated the tyrant-king, was cast into a fire made cool, and built the Kaaba with Ismail.", "Q 21:51–70, Q 2:124–129"),
-        b("biblical", "Called from Ur; promised descendants as numerous as the stars.", "Genesis 12–22"),
-        b("jewish", "Midrash elaborates his childhood smashing of his father's idols.", "Genesis Rabbah")
+        b("quran", "Reasoned from creation to the Creator, broke the idols, survived the fire made cool, confronted the tyrant, was tried with the sacrifice of his son, and raised the Kaaba with Ismāʿīl.", "Q 6:74–79; Q 21:51–70; Q 37:99–111; Q 2:124–129", "Surahs al-Anʿām, al-Anbiyāʼ, al-Ṣāffāt"),
+        b("bible", "Abram is called from Ur and Haran with the promise of land and descendants as numberless as the stars; God establishes a covenant and tests him with the binding of Isaac.", "Genesis 12–22", "Genesis"),
+        b("torah", "Avraham, first of the patriarchs, receives the brit (covenant) and circumcision; the Akedah (binding of Isaac) is read on Rosh Hashanah.", "Bereshit 12–22", "Torah"),
+        b("tradition", "Titled Khalīl Allāh; the midrash preserves his childhood smashing of his father's idols, echoed in the Quranic account.", "Genesis Rabbah 38; al-Tabari", "Midrash · Tafsir")
+      ],
+      encounters: [
+        enc("nimrod", "The debate with the king who claimed to give life and death.", "Q 2:258"),
+        enc("azar", "The gentle, grieving appeal to an idol-making father.", "Q 19:41–48"),
+        enc("ismail", "The shared submission to the command of sacrifice, and the building of the Kaaba.", "Q 37:102; Q 2:127"),
+        enc("hajar", "Leaving mother and child in the valley of Mecca in trust of God.", "Q 14:37")
       ],
       relations: [
         r("azar", "child"), r("hajar", "spouse"), r("sarah", "spouse"),
@@ -353,15 +402,29 @@
     },
     {
       id: "yusuf", name: "Yusuf", title: "The Trusted Interpreter (Joseph)",
-      named: true, era: "Patriarchs", group: "House of Yaqub",
-      names: { quran: "يُوسُف (Yūsuf)", biblical: "Joseph" },
+      named: true, era: "Patriarchs", group: "House of Yaqub", depth: "major",
+      names: { quran: "يُوسُف (Yūsuf)", bible: "Joseph", hebrew: "יוֹסֵף (Yōsēf)" },
       archetypes: ["prophet", "truth-seeker", "repentant"],
+      story: [
+        "As a boy Yūsuf dreamed of eleven stars, the sun and the moon bowing to him, and his father Yaʿqūb warned him to keep it from his envious brothers. They threw him into a well and sold him for a few coins to a passing caravan; he was carried to Egypt and bought into the house of a high official.",
+        "Grown into a man of striking beauty and integrity, he refused the advances of the official's wife — 'I seek refuge in God' — and chose prison over sin when the women of the city schemed against him. In prison he interpreted dreams, and when the king dreamed of seven fat and seven lean cattle, Yūsuf read it as years of plenty and famine and was raised to govern the granaries of Egypt.",
+        "When famine drove his brothers to Egypt to beg for grain, he knew them though they did not know him. He tested them, kept his full brother back, and at last revealed himself with words of pure mercy: 'No blame upon you today; God will forgive you.' He sent his shirt to restore his blind father's sight and gathered the family to Egypt — the eleven and their parents bowing, and the childhood dream fulfilled. The Quran calls his account 'the most beautiful of narratives.'"
+      ],
       lessons: ["Betrayed, enslaved, imprisoned — and raised to govern Egypt.",
-                "'No blame upon you today' — power used for mercy, not revenge."],
-      sources: ["quran", "hadith", "tafsir", "biblical"],
+                "'No blame upon you today' — power used for mercy, not revenge.",
+                "Patience and God-consciousness turn every wound into a rung upward."],
+      sources: ["quran", "bible", "torah", "tradition"],
       entries: [
-        b("quran", "His story is 'the most beautiful of narratives' — the dream, the well, the temptation, the prison, and the rise to authority.", "Q 12 (entire surah)"),
-        b("biblical", "Joseph and his coat, sold into Egypt, rising to vizier under Pharaoh.", "Genesis 37–50")
+        b("quran", "An entire surah tells his story: the dream, the well, the sale, the temptation resisted, the prison, the reading of the king's dream, the rise to authority, and the merciful reunion with his brothers and father.", "Q 12 (Surah Yūsuf)", "Surah Yūsuf"),
+        b("bible", "Joseph and the coat of many colours, sold into Egypt, rising under Pharaoh to save many nations from famine, and forgiving his brothers.", "Genesis 37–50", "Genesis"),
+        b("torah", "Yōsef ha-Tzaddik (the Righteous), whose story closes Bereshit and carries Israel down into Egypt.", "Bereshit 37–50", "Torah"),
+        b("tradition", "Granted 'half of all beauty'; the commentators dwell on his chastity and his forbearance toward those who wronged him.", "Sahih Muslim 162; al-Tabari", "Hadith · Tafsir")
+      ],
+      encounters: [
+        enc("yusuf-brothers", "Cast into the well by envious brothers — later forgiven without reproach.", "Q 12:15; Q 12:92"),
+        enc("zulaikha", "The temptation in the great house, and his choice of prison over sin.", "Q 12:23–33"),
+        enc("aziz", "Raised in, then over, the house of the Egyptian minister.", "Q 12:21"),
+        enc("yaqub", "The shirt that restored a grieving father's sight.", "Q 12:93–96")
       ],
       relations: [ r("yaqub", "child"), r("binyamin", "sibling"), r("yusuf-brothers", "sibling"), r("aziz", "servant"), r("zulaikha", "opponent") ]
     },
@@ -419,21 +482,36 @@
     /* ===================== MUSA NARRATIVE ===================== */
     {
       id: "musa", name: "Musa", title: "The One Who Spoke with God (Moses)",
-      named: true, era: "Exodus", group: "Bani Israel & Egypt",
-      names: { quran: "مُوسَىٰ (Mūsā)", biblical: "Moses", title: "Kalīm Allāh" },
+      named: true, era: "Exodus", group: "Bani Israel & Egypt", depth: "major",
+      names: { quran: "مُوسَىٰ (Mūsā)", bible: "Moses", hebrew: "מֹשֶׁה (Mōsheh)", tradition: "Kalīm Allāh — the one God spoke to" },
       archetypes: ["prophet", "reformer", "faithful-companion"],
+      story: [
+        "Born to an enslaved people whose sons Pharaoh was killing, the infant Mūsā was placed by his mother on the Nile in trust of God, and drawn from the water into Pharaoh's own palace — raised by the tyrant who sought his death. As a young man he struck and killed an Egyptian while defending a Hebrew, and fled to Madyan, where he watered the flocks of two women, married, and tended sheep for years.",
+        "Returning by night, he saw a fire on Mount Sinai and heard his Lord speak: 'I am God; there is no deity but Me.' Given the staff that became a serpent and the hand that shone white, he was sent — with his brother Hārūn, whom he asked for as a helper — to confront Pharaoh and demand the freedom of the Children of Israel. The court magicians, summoned to outmatch him, instead fell in prostration when his staff swallowed their illusions.",
+        "Through plagues and warnings Pharaoh's heart only hardened, until Mūsā led his people out and the sea parted for them and closed over their pursuers. At Sinai he received the Tablets; in his absence the people made a golden calf, and he returned in grief and anger. He even journeyed to learn hidden wisdom from al-Khiḍr, the servant given knowledge. No prophet is named more often in the Quran."
+      ],
       lessons: ["From a basket on the Nile to the court of Pharaoh.",
-                "He asked for his brother's help — leadership shared is leadership strengthened."],
-      sources: ["quran", "hadith", "tafsir", "biblical", "jewish"],
+                "He asked for his brother's help — leadership shared is leadership strengthened.",
+                "God raises deliverers in the very house of the oppressor.",
+                "Even the one who spoke with God was sent to keep learning."],
+      sources: ["quran", "bible", "torah", "tradition"],
       entries: [
-        b("quran", "Raised in Pharaoh's house, called at the burning bush, sent with signs to free Bani Israel, and given the Torah.", "Q 20, Q 28, Q 7:103–137"),
-        b("biblical", "Moses leads the Exodus and receives the Law at Sinai.", "Exodus"),
-        b("jewish", "Extensive midrash on his birth, naming, and prophethood.", "Midrash")
+        b("quran", "Saved on the Nile and raised by Pharaoh; called at the burning bush; sent with nine signs; the magicians believed; the sea parted; he received the Torah and faced the golden calf.", "Q 20; Q 28; Q 7:103–156; Q 26:10–68", "Surahs Ṭā Hā, al-Qaṣaṣ, al-Aʿrāf"),
+        b("bible", "Moses leads the Exodus from Egypt through the parted sea, receives the Ten Commandments at Sinai, and guides Israel forty years in the wilderness.", "Exodus; Numbers; Deuteronomy", "Exodus–Deuteronomy"),
+        b("torah", "Mosheh Rabbenu — 'Moses our Teacher' — the greatest of the prophets in Jewish tradition, through whom the Torah was given.", "Shemot 1–40", "Torah"),
+        b("tradition", "The prophet most often named in the Quran; met on the Night Journey, he counsels the Prophet Muhammad on the number of daily prayers.", "Sahih al-Bukhari 3887", "Hadith")
+      ],
+      encounters: [
+        enc("pharaoh", "The confrontation at court — staff against sorcery, freedom against tyranny.", "Q 7:104–126"),
+        enc("harun", "The brother given as helper and fellow prophet.", "Q 20:29–36"),
+        enc("khidr", "The journey to learn the hidden wisdom behind unsettling acts.", "Q 18:65–82"),
+        enc("shuayb", "Refuge in Madyan, the marriage, and years tending flocks.", "Q 28:22–28"),
+        enc("samiri", "The grief of return to find the people worshipping a golden calf.", "Q 20:83–98")
       ],
       relations: [
         r("harun", "sibling"), r("musa-mother", "child"), r("musa-sister", "sibling"),
         r("pharaoh", "opponent"), r("asiya", "kin", "raised by"), r("khidr", "student"),
-        r("shuayb", "kin", "son-in-law"), r("bani-israel", "ruler"), r("qarun", "opponent")
+        r("shuayb", "kin", "son-in-law"), r("yusha", "teacher"), r("bani-israel", "ruler"), r("qarun", "opponent")
       ]
     },
     {
@@ -680,29 +758,55 @@
     },
     {
       id: "maryam", name: "Maryam", title: "The Chosen Mother (Mary)",
-      named: true, era: "Gospel", group: "House of Imran",
-      names: { quran: "مَرْيَم (Maryam)", biblical: "Mary" },
+      named: true, era: "Gospel", group: "House of Imran", depth: "major",
+      names: { quran: "مَرْيَم (Maryam)", bible: "Mary", hebrew: "מִרְיָם (Miryām)" },
       archetypes: ["believing-woman", "truth-seeker"],
+      story: [
+        "Vowed to God's service by her mother before her birth, Maryam was placed in the care of the prophet Zakariyyā, who marvelled that she always had provision out of season: 'It is from God, who provides without measure.' She withdrew to a place of worship, devout and chaste.",
+        "There the angel came to her in the form of a man and announced a pure son. 'How can I have a child when no man has touched me?' She was told it was easy for God: 'Be,' and it is. She conceived and withdrew to a far place, and in the pains of birth beneath a palm tree cried out in anguish — but was comforted by a stream and ripe dates and a voice bidding her be at peace.",
+        "Returning to her people carrying the child, she met their accusation in silence, pointing to the infant — who spoke from the cradle: 'I am a servant of God; He has given me the Scripture and made me a prophet.' The Quran names her more than any other woman, calls her chosen 'above the women of the worlds,' and titles a whole surah with her name."
+      ],
       lessons: ["The only woman named in the Quran; a whole surah bears her name.",
-                "'Chosen above the women of the worlds.'"],
-      sources: ["quran", "hadith", "tafsir", "biblical"],
+                "'Chosen above the women of the worlds.'",
+                "Devotion and patient trust meet the impossible with 'Be, and it is.'"],
+      sources: ["quran", "bible", "tradition", "historical"],
       entries: [
-        b("quran", "Raised in devotion under Zakariyya's care; conceived Isa by God's word while remaining chaste; defended by the infant who spoke from the cradle.", "Q 3:42–47, Q 19:16–34"),
-        b("biblical", "Mary, mother of Jesus, who received the annunciation.", "Luke 1")
+        b("quran", "Dedicated to God and raised under Zakariyyā; visited by the angel and given a son by God's word while remaining chaste; vindicated by the infant who spoke from the cradle.", "Q 3:35–47; Q 19:16–34; Q 66:12", "Surahs Āl ʿImrān, Maryam"),
+        b("bible", "Mary receives the annunciation from Gabriel, conceives by the Holy Spirit, and bears Jesus; her song, the Magnificat, exalts God.", "Luke 1–2; Matthew 1", "Gospels"),
+        b("tradition", "Named with Āsiya among the most perfect of women; the commentators recount her provision out of season and her seclusion.", "Sahih al-Bukhari 3411; al-Tabari", "Hadith · Tafsir"),
+        b("historical", "Revered across Christianity and Islam alike; the only woman named in the Quran, and the subject of extensive Marian devotion and scholarship.", "Comparative religious study", "Scholarship")
+      ],
+      encounters: [
+        enc("zakariyya", "Raised under his guardianship in the temple, provision appearing out of season.", "Q 3:37"),
+        enc("isa", "The miraculous birth and the infant who spoke in her defence.", "Q 19:27–33"),
+        enc("imran-wife", "The mother whose vow dedicated her to God before birth.", "Q 3:35–36")
       ],
       relations: [ r("imran", "child"), r("imran-wife", "child"), r("isa", "parent"), r("zakariyya", "student") ]
     },
     {
       id: "isa", name: "Isa", title: "The Messiah, Word of God (Jesus)",
-      named: true, era: "Gospel", group: "House of Imran",
-      names: { quran: "عِيسَى (ʿĪsā) — al-Masīḥ", biblical: "Jesus / Christ" },
+      named: true, era: "Gospel", group: "House of Imran", depth: "major",
+      names: { quran: "عِيسَى (ʿĪsā) — al-Masīḥ", bible: "Jesus / Christ", hebrew: "יֵשׁוּעַ (Yēshūaʿ)" },
       archetypes: ["prophet", "reformer"],
+      story: [
+        "Born of Maryam without a father by the command 'Be,' ʿĪsā is called in the Quran the Messiah, a Word from God and a spirit from Him. As an infant he spoke from the cradle to defend his mother and proclaim himself a servant and prophet of God.",
+        "Sent to the Children of Israel, he was given the Injīl (Gospel) and supported by the holy spirit. By God's leave he healed the blind and the leper, breathed life into a bird of clay, and raised the dead; he came confirming the Torah before him and easing some of its burdens. His close disciples, the ḥawāriyyūn, declared themselves 'helpers of God,' and at their asking a table was sent from heaven.",
+        "The Quran teaches that he was neither killed nor crucified, but that it was made to appear so, and that God raised him to Himself. Muslims await his return. Honoured by Christians as Lord and by Muslims as a mighty messenger, ʿĪsā stands at the meeting point of the world's two largest faiths — and, in the Quran, foretold the coming of Aḥmad."
+      ],
       lessons: ["He spoke from the cradle in defence of his mother.",
-                "Given the Injil and clear signs, supported by the holy spirit."],
-      sources: ["quran", "hadith", "tafsir", "biblical"],
+                "Given the Injil and clear signs, supported by the holy spirit.",
+                "Mercy and healing were the signs of his ministry."],
+      sources: ["quran", "bible", "tradition", "historical"],
       entries: [
-        b("quran", "Born of Maryam by God's command; healed the blind and the leper and revived the dead by God's leave; raised by God rather than crucified.", "Q 3:45–55, Q 5:110, Q 4:157–158"),
-        b("biblical", "Jesus of Nazareth, his ministry, miracles, and passion.", "The Gospels")
+        b("quran", "The Messiah, a Word and spirit from God, born of Maryam; spoke in the cradle, healed and raised the dead by God's leave, was raised up rather than crucified, and foretold Aḥmad.", "Q 3:45–55; Q 5:110–115; Q 4:157–158; Q 61:6", "Surahs Āl ʿImrān, al-Māʼidah, al-Nisāʼ"),
+        b("bible", "Jesus of Nazareth: his birth, teaching, parables, miracles, passion, and resurrection, proclaimed as the Christ, the Son of God.", "Matthew · Mark · Luke · John", "Gospels"),
+        b("tradition", "Described in the ḥadīth of his second coming, descending to establish justice; the commentators detail his miracles and the table from heaven.", "Sahih al-Bukhari 3448; al-Tabari", "Hadith · Tafsir"),
+        b("historical", "The central figure of Christianity and a major prophet of Islam; the differing accounts of his nature and end mark the great divergence — and meeting point — of the two traditions.", "Comparative religious study", "Scholarship")
+      ],
+      encounters: [
+        enc("maryam", "Defending his mother from the cradle: 'I am a servant of God.'", "Q 19:30"),
+        enc("hawariyyun", "The disciples who declared, 'We are the helpers of God.'", "Q 3:52"),
+        enc("muhammad", "Foretelling a messenger to come after him, named Aḥmad.", "Q 61:6")
       ],
       relations: [ r("maryam", "child"), r("hawariyyun", "teacher"), r("yahya", "kin"),
                    r("ibrahim", "descendant", "among Ibrahim's progeny (Q 6:85)") ]
@@ -865,15 +969,29 @@
     /* ===================== THE FINAL MESSENGER ===================== */
     {
       id: "muhammad", name: "Muhammad", title: "The Final Messenger",
-      named: true, era: "Revelation in Mecca", group: "The Meccan Mission",
-      names: { quran: "مُحَمَّد (Muḥammad) — also Aḥmad" },
+      named: true, era: "Revelation in Mecca", group: "The Meccan Mission", depth: "major",
+      names: { quran: "مُحَمَّد (Muḥammad) — also Aḥmad", tradition: "Rasūl Allāh · Khātam al-Nabiyyīn (Seal of the Prophets)" },
       archetypes: ["prophet", "reformer", "faithful-companion"],
+      story: [
+        "Born in Mecca around 570 CE, orphaned young and raised by his grandfather and uncle, he grew known among his people as al-Amīn, 'the Trustworthy.' Given to retreat and reflection, he was forty when, in the cave of Ḥirāʼ, the angel Jibrīl came with the first word of revelation: 'Read, in the name of your Lord who created.'",
+        "For thirteen years in Mecca he called to the worship of the one God and the dignity of the poor, the orphan and the slave, meeting ridicule, boycott and persecution. The Quran descended to him over twenty-three years. After the migration (hijra) to Medina he became the leader of a community, and within his lifetime the message spread across Arabia.",
+        "The Quran calls him a mercy to the worlds and the seal of the prophets, descended through Ismāʿīl — the fulfilment of Ibrāhīm's prayer over the valley of Mecca. He is the only person whose biography (sīra) and sayings (ḥadīth) are recorded in vast detail, and the bearer, in Muslim belief, of the final revelation. In keeping with that tradition, he is never depicted in image."
+      ],
       lessons: ["The recipient of the Quran, sent as a mercy to the worlds.",
-                "Descended from Ismail, completing the arc of Ibrahim's prayer."],
-      sources: ["quran", "hadith", "historical"],
+                "Descended from Ismail, completing the arc of Ibrahim's prayer.",
+                "The trustworthy character preceded and carried the message."],
+      sources: ["quran", "bible", "tradition", "historical"],
       entries: [
-        b("quran", "The Messenger to whom the Quran was revealed; named four times, called a mercy to the worlds and the seal of the prophets.", "Q 33:40, Q 48:29, Q 21:107"),
-        b("historical", "Born in Mecca c. 570 CE; the sira records his life, mission, and the early Muslim community.", "Ibn Ishaq, Sira")
+        b("quran", "The Messenger to whom the Quran was revealed; named Muḥammad and Aḥmad, called a mercy to the worlds, an excellent example, and the seal of the prophets.", "Q 33:40; Q 48:29; Q 21:107; Q 33:21", "Surahs al-Aḥzāb, al-Fatḥ, al-Anbiyāʼ"),
+        b("bible", "Muslims read the Paraclete foretold by Jesus, and the prophet 'like Moses,' as references to him; this reading is not shared by Christian or Jewish tradition.", "John 14–16; Deuteronomy 18:18 (as read in Islam)", "as interpreted in Islam"),
+        b("tradition", "His life, character and sayings are preserved in the ḥadīth collections and the sīra; the Night Journey and Ascension (Isrāʼ and Miʿrāj) are among its great events.", "Sahih al-Bukhari; Sahih Muslim", "Hadith"),
+        b("historical", "Born in Mecca c. 570 CE; the earliest biography is Ibn Isḥāq's, transmitted by Ibn Hishām; among the most documented figures of late antiquity.", "Ibn Isḥāq / Ibn Hishām, Sīra", "Scholarship")
+      ],
+      encounters: [
+        enc("ibrahim", "The answer, generations later, to Ibrāhīm's prayer for a messenger from his seed.", "Q 2:129"),
+        enc("isa", "The one foretold by ʿĪsā under the name Aḥmad.", "Q 61:6"),
+        enc("zayd", "The freed slave he raised as his own — the only Companion named in the Quran.", "Q 33:37"),
+        enc("abu-lahab", "The uncle whose hostility a whole surah answers.", "Q 111")
       ],
       relations: [ r("ismail", "descendant"), r("ibrahim", "descendant"), r("zayd", "teacher"),
                    r("abu-lahab", "opponent"), r("isa", "successor", "came after Isa, who foretold him (Q 61:6)") ]
@@ -917,6 +1035,170 @@
         b("historical", "Named Umm Jamil, sister of Abu Sufyan, in the biographical tradition.", "Sira")
       ],
       relations: [ r("abu-lahab", "spouse"), r("muhammad", "opponent") ]
+    },
+
+    /* ===================== EXPANSION — FURTHER PROPHETS & FIGURES ===================== */
+    {
+      id: "sheth", name: "Sheth", title: "The Son Given After (Seth)",
+      named: false, era: "Beginnings", group: "Adam's Family", depth: "minor",
+      names: { quran: "(unnamed)", tradition: "شِيث (Shīth)", bible: "Seth", hebrew: "שֵׁת (Shēt)" },
+      archetypes: ["faithful-companion"],
+      lessons: ["The line of faith continued through the son given after loss."],
+      sources: ["bible", "torah", "tradition"],
+      entries: [
+        b("bible", "Seth is born to Adam and Eve after Abel's death, 'another seed' through whom the godly line continues.", "Genesis 4:25; 5:3", "Genesis"),
+        b("torah", "Shēt, third son of Adam, ancestor of Noaḥ and so of all who survive the flood.", "Bereshit 4–5", "Torah"),
+        b("tradition", "Named Shīth in Islamic tradition and counted by many as a prophet who received scriptures, the heir of Adam's knowledge.", "al-Tabari; Qiṣaṣ al-Anbiyāʼ", "Tafsir")
+      ],
+      relations: [ r("adam", "child"), r("idris", "ancestor") ]
+    },
+    {
+      id: "idris", name: "Idris", title: "The Lofty Prophet (Enoch)",
+      named: true, era: "Early Prophets", group: "Other Prophets & Sages", depth: "supporting",
+      names: { quran: "إِدْرِيس (Idrīs)", bible: "Enoch", hebrew: "חֲנוֹךְ (Ḥanōkh)" },
+      archetypes: ["prophet", "truth-seeker"],
+      story: [
+        "Idrīs is named in the Quran as a man of truth, a prophet whom God 'raised to a high station.' Tradition associates him with the beginnings of writing, astronomy and the measuring of time, and identifies him with the Biblical Enoch, who 'walked with God, and was no more, for God took him.'"
+      ],
+      lessons: ["Knowledge in the service of God lifts a person to a high station."],
+      sources: ["quran", "bible", "torah", "tradition"],
+      entries: [
+        b("quran", "Mentioned as truthful, a prophet, patient, and raised by God to a high place.", "Q 19:56–57; Q 21:85", "Surahs Maryam, al-Anbiyāʼ"),
+        b("bible", "Enoch walks faithfully with God for three hundred years and is taken up without dying.", "Genesis 5:21–24", "Genesis"),
+        b("tradition", "Met in the fourth heaven on the Night Journey; associated with the first use of the pen and the study of the stars.", "Sahih al-Bukhari 3342; al-Tabari", "Hadith · Tafsir")
+      ],
+      relations: [ r("adam", "descendant"), r("nuh", "ancestor") ]
+    },
+    {
+      id: "yusha", name: "Yusha ibn Nun", title: "The Attendant Who Led (Joshua)",
+      named: false, era: "Exodus", group: "Bani Israel & Egypt", depth: "supporting",
+      names: { quran: "(unnamed — 'his young attendant')", tradition: "يُوشَع بن نُون (Yūshaʿ b. Nūn)", bible: "Joshua", hebrew: "יְהוֹשֻׁעַ (Yehōshuaʿ)" },
+      archetypes: ["faithful-companion", "reformer"],
+      story: [
+        "The young man who attended Mūsā on the journey to meet al-Khiḍr is identified in tradition as Yūshaʿ ibn Nūn. After Mūsā, he led the Children of Israel across the Jordan into the promised land — the faithful servant who became the leader."
+      ],
+      lessons: ["The loyal attendant of one generation becomes the leader of the next."],
+      sources: ["quran", "bible", "torah", "tradition"],
+      entries: [
+        b("quran", "Referred to as Mūsā's young companion on the journey in search of knowledge.", "Q 18:60–62", "Surah al-Kahf"),
+        b("bible", "Joshua succeeds Moses, leads Israel across the Jordan, and the walls of Jericho fall.", "Joshua 1–6", "Joshua"),
+        b("torah", "Yehoshua, attendant of Moses and one of the two faithful spies, who brings Israel into the Land.", "Shemot 17; Bemidbar 13–14", "Torah"),
+        b("tradition", "Named as the prophet for whom the sun was held back so a battle could be completed before the Sabbath.", "Sahih al-Bukhari; al-Tabari", "Hadith · Tafsir")
+      ],
+      relations: [ r("musa", "student"), r("bani-israel", "ruler") ]
+    },
+    {
+      id: "ilyas", name: "Ilyas", title: "The Prophet Against Baal (Elijah)",
+      named: true, era: "Kingdom", group: "Other Prophets & Sages", depth: "supporting",
+      names: { quran: "إِلْيَاس (Ilyās)", bible: "Elijah", hebrew: "אֵלִיָּהוּ (Ēliyyāhū)" },
+      archetypes: ["prophet", "reformer"],
+      story: [
+        "Ilyās was sent to a people who worshipped Baal, calling them from the idol to the Lord who created them. The Quran honours him among the righteous; the Bible tells of Elijah's contest on Mount Carmel and his being taken up in a whirlwind."
+      ],
+      lessons: ["One voice can stand against a whole people gone after idols."],
+      sources: ["quran", "bible", "torah", "tradition"],
+      entries: [
+        b("quran", "Sent to forbid the worship of Baal; counted among the messengers and the righteous, with peace pronounced upon him.", "Q 37:123–132; Q 6:85", "Surah al-Ṣāffāt"),
+        b("bible", "Elijah confronts the prophets of Baal on Carmel, is fed by ravens, and is taken to heaven in a chariot of fire.", "1 Kings 17–19; 2 Kings 2", "1–2 Kings"),
+        b("tradition", "Listed in the Quranic genealogy of guided prophets; some traditions link or contrast him with al-Khiḍr.", "al-Tabari", "Tafsir")
+      ],
+      relations: [ r("ibrahim", "kin", "among the guided (Q 6:85)"), r("al-yasa", "teacher") ]
+    },
+    {
+      id: "al-yasa", name: "Al-Yasa", title: "The Successor Prophet (Elisha)",
+      named: true, era: "Kingdom", group: "Other Prophets & Sages", depth: "minor",
+      names: { quran: "الْيَسَع (al-Yasaʿ)", bible: "Elisha", hebrew: "אֱלִישָׁע (Ĕlīshāʿ)" },
+      archetypes: ["prophet"],
+      lessons: ["The work of guidance is handed on from prophet to prophet."],
+      sources: ["quran", "bible", "tradition"],
+      entries: [
+        b("quran", "Named among the prophets, each favoured above the worlds, alongside Ismāʿīl, Yūnus and Lūṭ.", "Q 6:86; Q 38:48", "Surahs al-Anʿām, Ṣād"),
+        b("bible", "Elisha succeeds Elijah, receiving a double portion of his spirit, and works many signs of mercy.", "2 Kings 2–13", "2 Kings"),
+        b("tradition", "Counted among the prophets of the Children of Israel who continued Ilyās's call.", "al-Tabari", "Tafsir")
+      ],
+      relations: [ r("ilyas", "student"), r("ibrahim", "kin", "among the guided (Q 6:86)") ]
+    },
+    {
+      id: "dhul-kifl", name: "Dhul-Kifl", title: "The Steadfast (Ezekiel, in tradition)",
+      named: true, era: "Other Prophets", group: "Other Prophets & Sages", depth: "minor",
+      names: { quran: "ذُو الْكِفْل (Dhū al-Kifl)", bible: "(Ezekiel, in tradition)" },
+      archetypes: ["prophet", "martyr"],
+      lessons: ["He took on a burden and kept his word — patience made into a name."],
+      sources: ["quran", "tradition"],
+      entries: [
+        b("quran", "Named with Ismāʿīl and Idrīs among the patient and the righteous, admitted into God's mercy.", "Q 21:85–86; Q 38:48", "Surahs al-Anbiyāʼ, Ṣād"),
+        b("tradition", "His identity is debated — many link him to Ezekiel; his name is read as 'the one of the double portion,' one who guaranteed and fulfilled a trust.", "al-Tabari; Ibn Kathir", "Tafsir")
+      ],
+      relations: [ r("ibrahim", "kin", "among the patient prophets (Q 21:85)") ]
+    },
+    {
+      id: "uzair", name: "Uzair", title: "The One Revived After a Century (Ezra)",
+      named: true, era: "Other Prophets", group: "Other Prophets & Sages", depth: "minor",
+      names: { quran: "عُزَيْر (ʿUzayr)", bible: "Ezra (traditionally)", hebrew: "עֶזְרָא (ʿEzrāʼ)" },
+      archetypes: ["truth-seeker"],
+      story: [
+        "The Quran tells of one who passed a town fallen into ruin and wondered how God could restore it to life; God caused him to die for a hundred years and then revived him, his food untouched, as a living sign of the resurrection. Tradition often identifies this figure with ʿUzayr (Ezra)."
+      ],
+      lessons: ["A hundred years is as a day to the One who gives life to the dead."],
+      sources: ["quran", "bible", "torah", "tradition"],
+      entries: [
+        b("quran", "Cited in a passage on one revived after a hundred years as a sign of resurrection; elsewhere a warning against calling ʿUzayr the son of God.", "Q 2:259; Q 9:30", "Surahs al-Baqarah, al-Tawbah"),
+        b("bible", "Ezra the scribe leads a return from exile and renews the covenant and the Law.", "Ezra 7–10", "Ezra"),
+        b("tradition", "Commentators connect the revived man with Ezra, honoured for restoring the Torah to memory after the exile.", "al-Tabari; Ibn Kathir", "Tafsir")
+      ],
+      relations: [ r("bani-israel", "kin") ]
+    },
+    {
+      id: "sahara", name: "The Magicians of Pharaoh", title: "The Sorcerers Who Believed",
+      named: false, era: "Exodus", group: "Bani Israel & Egypt", depth: "supporting", isCommunity: true,
+      names: { quran: "السَّحَرَة (al-Saḥara)" },
+      archetypes: ["truth-seeker", "martyr", "repentant"],
+      story: [
+        "Summoned by Pharaoh to defeat Mūsā, the magicians cast their ropes and staffs until the ground seemed to writhe with serpents. But when Mūsā's staff swallowed their illusions, they knew at once it was no magic, and fell down in prostration: 'We believe in the Lord of the worlds, the Lord of Mūsā and Hārūn.' Pharaoh threatened them with crucifixion and the cutting off of hands and feet; they answered that they did not care — they were returning to their Lord. In a single hour they passed from serving a tyrant to dying for the truth."
+      ],
+      lessons: ["Recognition of the truth can turn opponents into martyrs in an instant.",
+                "'We will never prefer you over the clear signs that have come to us.'"],
+      sources: ["quran", "tradition"],
+      entries: [
+        b("quran", "Pharaoh's sorcerers, defeated by Mūsā's sign, prostrate in belief and defy Pharaoh's threats of torture and death.", "Q 7:113–126; Q 20:70–73; Q 26:46–51", "Surahs al-Aʿrāf, Ṭā Hā, al-Shuʿarāʼ"),
+        b("tradition", "Held up by the commentators as those who entered the day disbelievers and left it as believing martyrs.", "al-Tabari; Ibn Kathir", "Tafsir")
+      ],
+      relations: [ r("musa", "ally"), r("pharaoh", "opponent") ]
+    },
+    {
+      id: "ashab-ukhdud", name: "Ashab al-Ukhdud", title: "The People of the Ditch",
+      named: false, era: "Other Prophets", group: "Other Prophets & Sages", depth: "supporting", isCommunity: true,
+      names: { quran: "أَصْحَاب الْأُخْدُود (Aṣḥāb al-Ukhdūd)" },
+      archetypes: ["martyr", "oppressed", "truth-seeker"],
+      story: [
+        "The Quran condemns the makers of a great trench filled with fire, into which they threw believers and sat watching them burn — punishing them for nothing but their faith in the Almighty. Tradition tells the story of a steadfast boy, a magician, a monk and a king, whose people came to believe and were martyred in the flames. The passage stands as a memorial to those killed for their faith and a warning to their killers."
+      ],
+      lessons: ["Faith can cost everything, and still be the only thing worth keeping.",
+                "The watchers of cruelty are judged with its doers."],
+      sources: ["quran", "tradition"],
+      entries: [
+        b("quran", "The makers of the fiery ditch are cursed for burning the believers, whose only 'crime' was faith in the Mighty, the Praiseworthy.", "Q 85:4–9", "Surah al-Burūj"),
+        b("tradition", "Expounded in the ḥadīth of the boy and the king, a parable of conviction under torture.", "Sahih Muslim 3005", "Hadith")
+      ],
+      relations: [ r("isa", "successor", "believers in the generations after Isa") ]
+    },
+    {
+      id: "saba", name: "The People of Saba", title: "The Nation of Sheba",
+      named: true, era: "Kingdom", group: "House of David", depth: "supporting", isCommunity: true,
+      names: { quran: "سَبَأ (Sabaʼ)", bible: "Sheba" },
+      archetypes: ["arrogant-elite", "oppressed"],
+      story: [
+        "Saba was a people blessed with gardens to their right and left, a land so fertile that travellers passed through it in unbroken shade. Told only to eat of their Lord's provision and give thanks, they turned away — and God sent the flood of the dam (sayl al-ʿarim), which swept their gardens into bitter orchards of thorn. Their queen, in another age, had once submitted with Sulaymān to the Lord of the worlds; their later generations are the Quran's parable of ingratitude for abundance."
+      ],
+      lessons: ["Abundance ungratefully held becomes the cause of its own ruin.",
+                "A whole civilisation can be undone by forgetting to give thanks."],
+      sources: ["quran", "bible", "tradition"],
+      entries: [
+        b("quran", "Given two gardens and ease, Sabaʼ turned from gratitude and was struck by the bursting of the dam; a surah carries their name.", "Q 34:15–19; Q 27:22–24", "Surahs Sabaʼ, al-Naml"),
+        b("bible", "The land of Sheba, famed for spices and gold, whose queen visited Solomon.", "1 Kings 10; Psalm 72", "1 Kings"),
+        b("tradition", "The bursting of the Maʼrib dam is remembered in Arab historical memory as a turning point that scattered the southern tribes.", "Ibn Isḥāq; historical accounts", "History")
+      ],
+      relations: [ r("bilqis", "ruler", "their queen"), r("sulayman", "contemporary") ]
     }
   ];
 
@@ -962,6 +1244,7 @@
 
   window.PQ_DATA = {
     layers: layers,
+    legacyTier: legacyTier,
     archetypes: archetypes,
     relationTypes: relationTypes,
     people: people,

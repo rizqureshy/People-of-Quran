@@ -13,6 +13,17 @@
   var layerById = index(DATA.layers);
   var archById = index(DATA.archetypes);
   var personById = index(DATA.people);
+  var LEGACY = DATA.legacyTier || {};
+
+  // Map any source id (legacy or new) to one of the five canonical tiers.
+  function tierOf(id) { return LEGACY[id] || id; }
+  // The set of source tiers a person draws on (from entries + sources field).
+  function tiersOf(p) {
+    var set = {};
+    (p.entries || []).forEach(function (e) { set[tierOf(e.layer)] = true; });
+    (p.sources || []).forEach(function (s) { set[tierOf(s)] = true; });
+    return set;
+  }
 
   function index(arr) {
     var o = {};
@@ -90,7 +101,8 @@
     }
     var lKeys = Object.keys(state.activeLayers);
     if (lKeys.length) {
-      var lhit = lKeys.some(function (l) { return (p.sources || []).indexOf(l) >= 0; });
+      var pt = tiersOf(p);
+      var lhit = lKeys.some(function (l) { return pt[l]; });
       if (!lhit) return false;
     }
     if (state.search) {
@@ -258,12 +270,38 @@
       return arch ? '<span class="mini-arch" title="' + arch.desc + '">' + arch.icon + ' ' + arch.label + '</span>' : "";
     }).join("");
 
-    var entries = (p.entries || []).map(function (e) {
-      var l = layerById[e.layer] || { label: e.layer, color: "#888" };
-      return '<div class="entry">' +
-        '<div class="entry-head"><span class="entry-layer" style="background:' + l.color + '">' +
-        l.label + '</span>' + (e.ref ? '<span class="entry-ref">' + e.ref + '</span>' : '') + '</div>' +
-        '<div class="entry-text">' + e.text + '</div></div>';
+    // Sourced statements grouped by tier, in the canonical reading order:
+    // Quran → Bible → Torah → Tradition → Historical.
+    var byTier = {};
+    (p.entries || []).forEach(function (e) {
+      var t = tierOf(e.layer);
+      (byTier[t] = byTier[t] || []).push(e);
+    });
+    var sources = DATA.layers.map(function (l) {
+      var group = byTier[l.id];
+      if (!group || !group.length) return "";
+      var rows = group.map(function (e) {
+        return '<div class="entry">' +
+          '<div class="entry-head"><span class="entry-layer" style="background:' + l.color + '">' +
+          l.label + '</span>' +
+          (e.sub ? '<span class="entry-sub">' + e.sub + '</span>' : '') +
+          (e.ref ? '<span class="entry-ref">' + e.ref + '</span>' : '') + '</div>' +
+          '<div class="entry-text">' + e.text + '</div></div>';
+      }).join("");
+      return rows;
+    }).join("");
+
+    // Engaging narrative prose (depth dimension).
+    var storyParas = (p.story || []).map(function (x) { return '<p>' + x + '</p>'; }).join("");
+
+    // Key encounters & historic moments.
+    var encounters = (p.encounters || []).map(function (e) {
+      var other = personById[e.with];
+      var who = other ? '<button class="enc-link" data-id="' + e.with + '">' + other.name + '</button>' :
+        (e.with ? '<span class="enc-who">' + e.with + '</span>' : '');
+      return '<div class="encounter">' +
+        (who ? '<div class="enc-with">' + who + '</div>' : '') +
+        '<div class="enc-moment">' + e.moment + (e.ref ? ' <span class="enc-ref">' + e.ref + '</span>' : '') + '</div></div>';
     }).join("");
 
     var lessons = (p.lessons || []).map(function (x) {
@@ -297,8 +335,10 @@
           '<div class="detail-title">' + (p.title || "") + '</div>' +
           (archChips ? '<div class="detail-arch">' + archChips + '</div>' : '') +
         '</div>' +
+        (storyParas ? '<div class="detail-section"><h3>The Story</h3><div class="story-prose">' + storyParas + '</div></div>' : '') +
         (namesRows ? '<div class="detail-section"><h3>Names</h3><div class="names">' + namesRows + '</div></div>' : '') +
-        (entries ? '<div class="detail-section"><h3>Knowledge Layers</h3><p class="section-note">Every statement keeps its origin.</p>' + entries + '</div>' : '') +
+        (sources ? '<div class="detail-section"><h3>Across the Sources</h3><p class="section-note">Quran · Bible · Torah · Tradition · Historical — each statement keeps its origin.</p>' + sources + '</div>' : '') +
+        (encounters ? '<div class="detail-section"><h3>Encounters &amp; Moments</h3><div class="encounters">' + encounters + '</div></div>' : '') +
         (lessons ? '<div class="detail-section"><h3>Lessons</h3><ul class="lessons">' + lessons + '</ul></div>' : '') +
         (rels ? '<div class="detail-section"><h3>Connections</h3><div class="rels">' + rels + '</div></div>' : '') +
       '</div>';
@@ -319,7 +359,7 @@
           function () { flashBanner("Copy failed"); });
       } else { flashBanner("Copy not supported"); }
     };
-    Array.prototype.forEach.call(d.querySelectorAll(".rel-link"), function (btn) {
+    Array.prototype.forEach.call(d.querySelectorAll(".rel-link, .enc-link"), function (btn) {
       btn.onclick = function () { select(btn.getAttribute("data-id"), true); };
     });
 

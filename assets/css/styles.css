@@ -337,10 +337,36 @@ body {
   border-left: 3px solid var(--gold); border-radius: 9px;
   padding: 11px 13px; margin-bottom: 9px;
 }
-.entry-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; gap: 8px; }
+.entry-head { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 6px; gap: 6px; }
 .entry-layer { font-size: 10px; font-weight: 600; color: #11131a; padding: 2px 8px; border-radius: 999px; }
-.entry-ref { font-size: 11px; color: var(--ink-faint); font-style: italic; }
+.entry-sub { font-size: 10.5px; color: var(--ink-dim); border: 1px solid var(--line); padding: 1px 7px; border-radius: 999px; }
+.entry-ref { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-left: auto; }
 .entry-text { font-size: 13px; line-height: 1.5; color: var(--ink); }
+
+/* Story prose */
+.story-prose p {
+  font-size: 13.5px; line-height: 1.62; color: var(--ink-dim); margin: 0 0 10px;
+}
+.story-prose p:first-child::first-letter {
+  font-family: var(--serif); font-size: 34px; line-height: 0.9; float: left;
+  padding: 2px 8px 0 0; color: var(--gold-soft);
+}
+
+/* Encounters & moments */
+.encounters { display: flex; flex-direction: column; gap: 8px; }
+.encounter {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 9px; padding: 9px 12px;
+}
+.enc-with { margin-bottom: 3px; }
+.enc-link {
+  font-family: var(--serif); font-size: 13.5px; color: var(--gold-soft);
+  background: none; border: none; padding: 0; cursor: pointer;
+}
+.enc-link:hover { text-decoration: underline; }
+.enc-who { font-family: var(--serif); font-size: 13.5px; color: var(--ink); }
+.enc-moment { font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); }
+.enc-ref { font-size: 11px; color: var(--ink-faint); font-style: italic; }
 
 .lessons { margin: 0; padding-left: 18px; }
 .lessons li { font-size: 13px; line-height: 1.5; color: var(--ink-dim); margin-bottom: 6px; }
