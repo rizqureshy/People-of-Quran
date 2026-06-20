@@ -417,11 +417,25 @@ body {
   .stats { display: none; }
   .layout { grid-template-columns: 1fr; }
   .sidebar {
-    position: absolute; z-index: 30; left: 0; top: 0; bottom: 0; width: 300px;
+    position: absolute; z-index: 30; left: 0; top: 0; bottom: 0; width: min(86vw, 320px);
     transform: translateX(-100%); transition: transform 0.25s;
   }
   .sidebar.open { transform: translateX(0); box-shadow: var(--shadow); }
   .detail.open { width: 100%; position: absolute; right: 0; top: 0; bottom: 0; z-index: 31; }
   .detail-scroll { width: 100%; }
   .layout:has(.detail.open) { grid-template-columns: 1fr; }
+
+  /* Controls wrap to the top-right and shrink; the era ribbon moves to
+     the bottom so the two never collide on a narrow screen. */
+  .stage-controls {
+    top: 8px; right: 8px; left: auto; gap: 6px; flex-wrap: wrap;
+    justify-content: flex-end; max-width: 64vw;
+  }
+  .ctrl-btn { font-size: 11px; padding: 6px 9px; border-radius: 8px; }
+  .era-ribbon { top: auto; bottom: 12px; left: 50%; max-width: 94vw; padding: 4px; }
+  .era-pill { font-size: 11px; padding: 5px 10px; }
+  .legend { display: none; }
+  .path-panel { bottom: 64px; max-width: 94vw; }
+  .hero-title { font-size: clamp(28px, 9vw, 46px); }
+  .tooltip { display: none !important; }   /* no hover on touch */
 }

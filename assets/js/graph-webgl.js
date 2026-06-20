@@ -118,8 +118,9 @@ class PQGraphGL {
     this._time = 0;
 
     const W = canvas.clientWidth || 800, H = canvas.clientHeight || 600;
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this._mobile = (typeof matchMedia !== 'undefined' && matchMedia('(max-width: 820px)').matches) || ('ontouchstart' in window && Math.min(W, H) < 820);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !this._mobile, alpha: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this._mobile ? 1.5 : 2));
     renderer.setSize(W, H, false);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
@@ -153,7 +154,7 @@ class PQGraphGL {
     // Post-processing: render -> bloom -> output
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.95, 0.6, 0.55);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), this._mobile ? 0.72 : 0.95, this._mobile ? 0.5 : 0.6, 0.55);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
     this.composer = composer; this.bloom = bloom;
@@ -175,9 +176,10 @@ class PQGraphGL {
   /* ---------- background: stars + nebulae ---------- */
   _buildBackground() {
     const starTex = starTexture();
+    const q = this._mobile ? 0.45 : 1;            // fewer particles on phones
     const layers = [
-      { n: 1400, rMin: 1200, rMax: 4200, size: 7, op: 0.55 },
-      { n: 700, rMin: 600, rMax: 1400, size: 11, op: 0.8 }
+      { n: Math.round(1400 * q), rMin: 1200, rMax: 4200, size: 7, op: 0.55 },
+      { n: Math.round(700 * q), rMin: 600, rMax: 1400, size: 11, op: 0.8 }
     ];
     this._starPoints = [];
     for (const ly of layers) {

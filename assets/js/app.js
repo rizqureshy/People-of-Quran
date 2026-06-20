@@ -782,10 +782,13 @@
       DATA.people.filter(function (p) { return !p.named; }).length;
     document.getElementById("stat-stories").textContent = DATA.stories.length;
 
-    // Hero overlay + cinematic intro. Clicking anywhere on the hero enters.
+    // Hero overlay + cinematic intro. Tap/click anywhere on the hero enters.
     function enterUniverse() { hideHero(); if (graph && graph.skipIntro) graph.skipIntro(); }
     var heroEl = document.getElementById("hero");
-    if (heroEl) heroEl.addEventListener("click", enterUniverse);
+    if (heroEl) {
+      heroEl.addEventListener("click", enterUniverse);
+      heroEl.addEventListener("touchend", function (e) { if (e && e.cancelable) e.preventDefault(); enterUniverse(); }, { passive: false });
+    }
     var heroEnter = document.getElementById("hero-enter");
     if (heroEnter) heroEnter.onclick = function (e) { if (e && e.stopPropagation) e.stopPropagation(); enterUniverse(); };
 
