@@ -178,15 +178,21 @@ node -e "global.window={};require('./assets/js/data.js');
 
 ## ✦ Status & roadmap
 
-The dataset currently holds **91 people** — prophets, kings, believers,
-tyrants, families, nations and tribes — across the major narrative families
-(Adam, Nuh, Ibrahim, Yaqub & Yusuf, Musa & Egypt, Dawud & Sulayman, Maryam &
-Isa, the other prophets and sages), the nations and tribes, and many
-unnamed-but-pivotal figures. **Scope: everyone here is mentioned or referenced
-in the Quran, the Bible, or the Torah** — figures known only through later
-tradition are deliberately excluded. Each statement is still sourced in a fixed
-order — **Quran → Bible → Torah → Tradition → Historical** — and the prominent
-figures carry a narrative story and their key encounters.
+The dataset currently holds **110 people** — prophets, kings, believers,
+tyrants, families, nations and tribes, the Prophet's household and Companions —
+across the major narrative families (Adam, Nuh, Ibrahim, Yaqub & Yusuf, Musa &
+Egypt, Dawud & Sulayman, Maryam & Isa, the other prophets and sages), and many
+unnamed-but-pivotal figures.
+
+**Scope: everyone here is mentioned *or referenced* in the Quran, the Bible, or
+the Torah** — including those who are referenced but never named (Pharaoh's wife,
+the Queen of Sheba, the People of the Cave) and those referenced through an
+occasion of revelation or among the believers (the Companions and the People of
+the House). Figures with *no* scriptural reference at all are not included. Every
+person carries at least one Quran/Bible/Torah source, after which the record may
+draw on Tradition and Historical scholarship — always in the order
+**Quran → Bible → Torah → Tradition → Historical** — and the prominent figures
+carry a narrative story and their key encounters.
 
 Data lives in `assets/js/data.js` plus modular files under `assets/js/data/`
 (prophets & kings, nations & tribes, companions, and a deepening patch), so the
