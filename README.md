@@ -178,10 +178,17 @@ node -e "global.window={};require('./assets/js/data.js');
 
 ## ✦ Status & roadmap
 
-This is a **foundational seed** of the vision. The dataset currently spans the
-major narrative families — Adam, Nuh, Ibrahim, Yaqub & Yusuf, Musa & Egypt,
-Dawud & Sulayman, Maryam & Isa, the other prophets and sages, and the Meccan
-mission — including many unnamed figures.
+The dataset currently holds **110 people** — prophets, kings, believers,
+tyrants, families, nations and tribes — across the major narrative families
+(Adam, Nuh, Ibrahim, Yaqub & Yusuf, Musa & Egypt, Dawud & Sulayman, Maryam &
+Isa, the other prophets and sages), the nations and tribes, the Prophet's
+household and Companions, and many unnamed-but-pivotal figures. Each statement
+is sourced in a fixed order — **Quran → Bible → Torah → Tradition → Historical**
+— and the prominent figures carry a narrative story and their key encounters.
+
+Data lives in `assets/js/data.js` plus modular files under `assets/js/data/`
+(prophets & kings, nations & tribes, companions, and a deepening patch), so the
+universe can keep growing in authenticated waves.
 
 Natural next steps:
 
