@@ -54,20 +54,35 @@
     };
   }
 
+  // Parse a colour into {r,g,b}. Accepts "#rrggbb", "#rgb", or "rgb(r,g,b)".
+  // Always returns finite channel values so we never emit "rgba(NaN,…)",
+  // which Safari rejects with "The string did not match the expected pattern".
   function hexToRgb(hex) {
+    if (typeof hex !== "string") return { r: 0, g: 0, b: 0 };
+    var m = hex.match(/rgba?\(([^)]+)\)/i);
+    if (m) {
+      var p = m[1].split(",");
+      return { r: clamp255(p[0]), g: clamp255(p[1]), b: clamp255(p[2]) };
+    }
     var h = hex.replace("#", "");
-    return { r: parseInt(h.substr(0, 2), 16), g: parseInt(h.substr(2, 2), 16), b: parseInt(h.substr(4, 2), 16) };
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return { r: clamp255(parseInt(h.substr(0, 2), 16)),
+             g: clamp255(parseInt(h.substr(2, 2), 16)),
+             b: clamp255(parseInt(h.substr(4, 2), 16)) };
   }
+  function clamp255(v) { v = parseInt(v, 10) >= 0 || +v >= 0 ? +v : 0; v = v | 0; return v < 0 ? 0 : v > 255 ? 255 : (v || 0); }
+  function toHex2(v) { v = clamp255(v); return (v < 16 ? "0" : "") + v.toString(16); }
   function rgba(hex, a) {
     var c = hexToRgb(hex);
     return "rgba(" + c.r + "," + c.g + "," + c.b + "," + a + ")";
   }
+  // Returns a hex string so results compose cleanly with rgba()/mix().
   function mix(hex, hex2, t) {
     var a = hexToRgb(hex), b = hexToRgb(hex2);
     var r = Math.round(a.r + (b.r - a.r) * t);
     var g = Math.round(a.g + (b.g - a.g) * t);
     var bl = Math.round(a.b + (b.b - a.b) * t);
-    return "rgb(" + r + "," + g + "," + bl + ")";
+    return "#" + toHex2(r) + toHex2(g) + toHex2(bl);
   }
 
   /* Build the vertices of an {n}-point star ring. */

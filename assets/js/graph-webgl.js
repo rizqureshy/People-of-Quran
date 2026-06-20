@@ -254,8 +254,11 @@ class PQGraphGL {
     step('cards');
     for (const n of nodes) {
       const p = this.personById[n.id];
-      const card = cardTexture(p, this.depict);
-      const mat = new THREE.SpriteMaterial({ map: card.texture, transparent: true, depthWrite: false, depthTest: true });
+      // One malformed card must never take down the whole universe.
+      let card;
+      try { card = cardTexture(p, this.depict); }
+      catch (e) { if (window.console) console.warn('card texture failed for', n.id, e); card = { texture: null, aspect: 2.7 }; }
+      const mat = new THREE.SpriteMaterial({ map: card.texture, color: card.texture ? 0xffffff : (n.color || 0x9aa6c0), transparent: true, depthWrite: false, depthTest: true });
       const sprite = new THREE.Sprite(mat);
       const P = pos[n.id];
       sprite.position.set(P.x, P.y, P.z);
