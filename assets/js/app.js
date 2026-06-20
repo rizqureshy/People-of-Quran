@@ -63,7 +63,8 @@
   // Eras in rough chronological order, for the timeline ribbon.
   var ERA_ORDER = [
     "Beginnings", "Early Prophets", "Patriarchs", "Exodus",
-    "Kingdom", "Gospel", "Other Prophets",
+    "The Conquest & Judges", "Kingdom", "Divided Kingdom", "Exile & Return",
+    "Other Prophets", "Gospel", "The Apostolic Age",
     "Revelation in Mecca", "Revelation in Medina"
   ];
 
@@ -253,6 +254,16 @@
     flashBanner("Story: " + s.title);
   }
 
+  // A small kicker tag: named in the Quran, named in the Bible/Torah, or
+  // referenced-but-unnamed — accurate now that the scope spans all scriptures.
+  function scripturalTag(p) {
+    if (p.named) return '';
+    var t = tiersOf(p);
+    if (!t.quran && (t.bible || t.torah))
+      return ' · <span class="tag-scripture">in the Bible / Torah</span>';
+    return ' · <span class="tag-unnamed">unnamed in the Quran</span>';
+  }
+
   function renderDetail(p) {
     var d = document.getElementById("detail");
     if (!p) {
@@ -330,8 +341,7 @@
           '<div class="depiction-note">aniconic seal · geometric depiction</div>' +
         '</div>' +
         '<div class="detail-head">' +
-          '<div class="detail-kicker">' + (p.era || "") +
-            (p.named ? '' : ' · <span class="tag-unnamed">unnamed in the Quran</span>') + '</div>' +
+          '<div class="detail-kicker">' + (p.era || "") + scripturalTag(p) + '</div>' +
           '<h2 class="detail-name">' + p.name + '</h2>' +
           '<div class="detail-title">' + (p.title || "") + '</div>' +
           (archChips ? '<div class="detail-arch">' + archChips + '</div>' : '') +
