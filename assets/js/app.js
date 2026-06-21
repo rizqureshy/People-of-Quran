@@ -183,7 +183,7 @@
         item.className = "person-item" + (state.selected === p.id ? " selected" : "");
         item.innerHTML =
           '<span class="pi-dot" style="background:' + colorFor(p) + '"></span>' +
-          '<span class="pi-body"><span class="pi-name">' + p.name +
+          '<span class="pi-body"><span class="pi-name">' + pname(p) +
           (p.named ? '' : ' <span class="tag-unnamed">referenced</span>') +
           '</span><span class="pi-title">' + (p.title || "") + '</span></span>';
         item.onclick = function () { select(p.id, true); };
@@ -264,6 +264,12 @@
     return ' · <span class="tag-unnamed">referenced</span>';
   }
 
+  // A prophet's name is followed by the honorific (PBUH).
+  function pname(p) {
+    if (!p) return "";
+    return (p.archetypes || []).indexOf("prophet") >= 0 ? p.name + " (PBUH)" : p.name;
+  }
+
   function renderDetail(p) {
     var d = document.getElementById("detail");
     if (!p) {
@@ -327,7 +333,7 @@
     // Key encounters & historic moments.
     var encounters = (p.encounters || []).map(function (e) {
       var other = personById[e.with];
-      var who = other ? '<button class="enc-link" data-id="' + e.with + '">' + other.name + '</button>' :
+      var who = other ? '<button class="enc-link" data-id="' + e.with + '">' + pname(other) + '</button>' :
         (e.with ? '<span class="enc-who">' + e.with + '</span>' : '');
       return '<div class="encounter">' +
         (who ? '<div class="enc-with">' + who + '</div>' : '') +
@@ -344,7 +350,7 @@
         var label = (DATA.relationTypes[r.type] || r.type);
         return '<button class="rel-link" data-id="' + r.to + '">' +
           '<span class="rel-type">' + label + (r.note ? ' (' + r.note + ')' : '') + '</span>' +
-          '<span class="rel-name">' + other.name + '</span></button>';
+          '<span class="rel-name">' + pname(other) + '</span></button>';
       }).join("");
 
     var arabic = window.PQDepict ? window.PQDepict.arabicOf(p) : "";
@@ -360,7 +366,7 @@
         '</div>' +
         '<div class="detail-head">' +
           '<div class="detail-kicker">' + (p.era || "") + scripturalTag(p) + '</div>' +
-          '<h2 class="detail-name">' + p.name + '</h2>' +
+          '<h2 class="detail-name">' + pname(p) + '</h2>' +
           '<div class="detail-title">' + (p.title || "") + '</div>' +
           (archChips ? '<div class="detail-arch">' + archChips + '</div>' : '') +
         '</div>' +
@@ -612,7 +618,7 @@
       if (i > 0) {
         html += '<span class="path-rel">' + relLabel(path[i - 1], id) + '</span>';
       }
-      html += '<button class="path-node" data-id="' + id + '">' + personById[id].name + '</button>';
+      html += '<button class="path-node" data-id="' + id + '">' + pname(personById[id]) + '</button>';
     });
     html += '</div>';
     panel.innerHTML = html;
@@ -704,7 +710,7 @@
     var p = personById[id];
     if (!p) { tip.classList.remove("show"); return; }
     var ar = window.PQDepict ? window.PQDepict.arabicOf(p) : "";
-    tip.innerHTML = '<strong>' + p.name + '</strong>' +
+    tip.innerHTML = '<strong>' + pname(p) + '</strong>' +
       (ar ? '<span class="tip-ar">' + ar + '</span>' : '') +
       '<span>' + (p.title || "") + '</span>';
     tip.style.left = (screenPos.x + 14) + "px";

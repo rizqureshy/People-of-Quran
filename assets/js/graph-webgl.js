@@ -64,34 +64,26 @@ function cardTexture(person, depict) {
   const x = c.getContext('2d'); x.scale(S, S);
 
   const prophet = (person.archetypes || []).indexOf('prophet') >= 0;
-  // Refusers, tyrants, the arrogant and the defiant carry no light; everyone
-  // else (the prophets, the believing, the oppressed, the repentant, the
-  // nations who kept faith) glows — the bloom pass turns the gold rim and
-  // seal aura into an outward glow.
+  // The glow distinction lives on the NAME, not the seal: the faithful have a
+  // luminous name; refusers, tyrants, the arrogant and defiant have a dim,
+  // unlit name — unless the figure is a prophet, companion, martyr or
+  // believing woman, or its primary role is the sympathetic "oppressed".
   const NEG = { tyrant: 1, 'arrogant-elite': 1, hypocrite: 1, skeptic: 1 };
   const ALWAYS = { prophet: 1, 'faithful-companion': 1, martyr: 1, 'believing-woman': 1 };
   const arch = person.archetypes || [];
-  // The defiant carry no light: any refuser/tyrant/arrogant/hypocrite trait
-  // darkens the card — unless the figure is a prophet, companion, martyr or
-  // believing woman, or its DEFINING (primary) role is a sympathetic victim
-  // (the oppressed). So Haman (an arrogant schemer) goes dark, while Bani
-  // Israel (primarily oppressed) and Thomas (an apostle) keep their light.
   const positive = !arch.some(function (a) { return NEG[a]; }) ||
     arch.some(function (a) { return ALWAYS[a]; }) ||
     arch[0] === 'oppressed';
   const pad = 16, emR = 44;
-  // glass body
-  roundRect(x, 4, 4, W - 8, H - 8, 22);
-  x.fillStyle = positive ? 'rgba(10,12,24,0.82)' : 'rgba(16,13,18,0.88)'; x.fill();
-  if (positive) {
-    x.lineWidth = 7; x.strokeStyle = 'rgba(240,201,78,0.16)'; x.stroke();   // soft halo for bloom
-    x.lineWidth = 2.6; x.strokeStyle = prophet ? 'rgba(245,210,110,0.95)' : 'rgba(224,180,90,0.7)'; x.stroke();
-  } else {
-    x.lineWidth = 2.2; x.strokeStyle = 'rgba(120,130,156,0.5)'; x.stroke(); // cold, unlit
-  }
-  // seal
+  // glass body — normal for everyone
+  roundRect(x, 2, 2, W - 4, H - 4, 22);
+  x.fillStyle = 'rgba(10,12,24,0.82)'; x.fill();
+  x.lineWidth = 2.5;
+  x.strokeStyle = prophet ? 'rgba(216,168,56,0.85)' : 'rgba(150,170,230,0.4)';
+  x.stroke();
+  // seal — drawn normally for everyone
   const ex = pad + emR, ey = H / 2;
-  if (depict) depict.drawSeal(x, ex, ey, emR, person, { glow: positive, muted: !positive });
+  if (depict) depict.drawSeal(x, ex, ey, emR, person, { glow: false });
   // name + cross-tradition alt-name + title
   const tx = ex + emR + 14;
   const maxW = W - tx - pad;
@@ -108,9 +100,16 @@ function cardTexture(person, depict) {
   if (alt && (altPrimary.toLowerCase() === (person.name || '').toLowerCase() ||
               (altPrimary && title.indexOf(altPrimary) >= 0))) alt = '';
 
-  // Lay the lines out as a vertically-centred stack against the seal,
-  // so the card breathes whether a figure has 2, 3 or 4 lines.
-  const lines = [{ t: person.name, f: "600 28px 'Inter', system-ui, sans-serif", c: '#eaf2ff', h: 33 }];
+  // Prophets' names are followed by the honorific (PBUH).
+  const dispName = person.name + (prophet ? ' (PBUH)' : '');
+
+  // Lay the lines out as a vertically-centred stack against the seal, so the
+  // card breathes whether a figure has 2, 3 or 4 lines. The name line glows
+  // for the faithful and is dim for the defiant.
+  const lines = [{
+    t: dispName, f: "600 28px 'Inter', system-ui, sans-serif",
+    c: positive ? '#eef4ff' : '#9aa3b8', h: 33, glow: positive
+  }];
   if (alt) lines.push({ t: alt, f: "600 17px 'Inter', system-ui, sans-serif", c: 'rgba(240,201,78,0.92)', h: 24 });
   if (title) lines.push({ t: title, f: "19px 'Inter', system-ui, sans-serif", c: '#9fb0d0', h: 25 });
   if (!person.named) lines.push({ t: '✦ referenced', f: "italic 15px 'Inter', sans-serif", c: 'rgba(240,201,78,0.8)', h: 20 });
@@ -120,7 +119,9 @@ function cardTexture(person, depict) {
   x.textBaseline = 'top';
   for (let i = 0; i < lines.length; i++) {
     x.font = lines[i].f; x.fillStyle = lines[i].c;
+    if (lines[i].glow) { x.shadowColor = 'rgba(245,225,150,0.9)'; x.shadowBlur = 15; }
     fillClipped(x, lines[i].t, tx, cy, maxW);
+    x.shadowBlur = 0; x.shadowColor = 'transparent';
     cy += lines[i].h;
   }
 
