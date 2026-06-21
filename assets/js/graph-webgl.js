@@ -71,9 +71,14 @@ function cardTexture(person, depict) {
   const NEG = { tyrant: 1, 'arrogant-elite': 1, hypocrite: 1, skeptic: 1 };
   const ALWAYS = { prophet: 1, 'faithful-companion': 1, martyr: 1, 'believing-woman': 1 };
   const arch = person.archetypes || [];
-  // Dark only if defiance is the DEFINING trait (primary archetype) and the
-  // figure is not a prophet/companion/martyr/believing woman.
-  const positive = arch.some(function (a) { return ALWAYS[a]; }) || !NEG[arch[0]];
+  // The defiant carry no light: any refuser/tyrant/arrogant/hypocrite trait
+  // darkens the card — unless the figure is a prophet, companion, martyr or
+  // believing woman, or its DEFINING (primary) role is a sympathetic victim
+  // (the oppressed). So Haman (an arrogant schemer) goes dark, while Bani
+  // Israel (primarily oppressed) and Thomas (an apostle) keep their light.
+  const positive = !arch.some(function (a) { return NEG[a]; }) ||
+    arch.some(function (a) { return ALWAYS[a]; }) ||
+    arch[0] === 'oppressed';
   const pad = 16, emR = 44;
   // glass body
   roundRect(x, 4, 4, W - 8, H - 8, 22);
@@ -86,7 +91,7 @@ function cardTexture(person, depict) {
   }
   // seal
   const ex = pad + emR, ey = H / 2;
-  if (depict) depict.drawSeal(x, ex, ey, emR, person, { glow: positive });
+  if (depict) depict.drawSeal(x, ex, ey, emR, person, { glow: positive, muted: !positive });
   // name + cross-tradition alt-name + title
   const tx = ex + emR + 14;
   const maxW = W - tx - pad;

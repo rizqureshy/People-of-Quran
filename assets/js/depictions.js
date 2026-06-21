@@ -419,7 +419,11 @@
     var rot = rand() * Math.PI;
     var petals = [6, 8, 8, 12][Math.floor(rand() * 4)];
     var isProphet = (person.archetypes || []).indexOf("prophet") >= 0;
-    var light = mix(base, "#ffffff", 0.45);
+    if (opts.muted) base = mix(base, "#0b0d15", 0.74);     // drain the colour from the defiant
+    var light = mix(base, "#ffffff", opts.muted ? 0.16 : 0.45);
+    var ink = opts.muted ? "#9aa3b8" : "#ffffff";           // strokes go cold instead of bright white
+    var rimGold = opts.muted ? "#6b7286" : GOLD;
+    var motifInk = opts.muted ? "#838ca2" : "#f4ead2";
 
     ctx.save();
 
@@ -447,7 +451,7 @@
 
     // Outer rim — gold for prophets, lighter otherwise
     ctx.lineWidth = Math.max(1, R * 0.05);
-    ctx.strokeStyle = isProphet ? GOLD : rgba("#ffffff", 0.5);
+    ctx.strokeStyle = isProphet ? GOLD : rgba(ink, 0.5);
     ctx.beginPath();
     ctx.arc(cx, cy, R * 0.96, 0, Math.PI * 2);
     ctx.stroke();
@@ -460,12 +464,12 @@
     ctx.fill();
     ctx.stroke();
 
-    ctx.strokeStyle = rgba("#ffffff", 0.65);
+    ctx.strokeStyle = rgba(ink, 0.65);
     starPath(ctx, cx, cy, n, R * 0.66, R * 0.3, rot + Math.PI / n);
     ctx.stroke();
 
     // Arabesque petal ring
-    ctx.strokeStyle = rgba("#ffffff", 0.4);
+    ctx.strokeStyle = rgba(ink, 0.4);
     ctx.lineWidth = Math.max(0.6, R * 0.02);
     for (var p = 0; p < petals; p++) {
       var a = rot + (Math.PI * 2 * p) / petals;
@@ -482,7 +486,7 @@
     polygonPath(ctx, cx, cy, n > 8 ? 8 : n, R * 0.34, rot);
     ctx.fillStyle = rgba(mix(base, "#000000", 0.5), 0.96);
     ctx.fill();
-    ctx.strokeStyle = rgba(GOLD, person.named ? 0.9 : 0.7);
+    ctx.strokeStyle = rgba(rimGold, person.named ? 0.9 : 0.7);
     ctx.lineWidth = Math.max(0.9, R * 0.035);
     if (!person.named) ctx.setLineDash([R * 0.09, R * 0.06]);
     ctx.stroke();
@@ -490,8 +494,8 @@
 
     // Story motif at the heart of the seal (bespoke, else by archetype)
     var motif = motifFor(person);
-    if (motif) drawMotif(ctx, cx, cy, R * 0.21, motif, "#f4ead2");
-    else { ctx.beginPath(); ctx.arc(cx, cy, R * 0.08, 0, Math.PI * 2); ctx.fillStyle = GOLD; ctx.fill(); }
+    if (motif) drawMotif(ctx, cx, cy, R * 0.21, motif, motifInk);
+    else { ctx.beginPath(); ctx.arc(cx, cy, R * 0.08, 0, Math.PI * 2); ctx.fillStyle = rimGold; ctx.fill(); }
 
     ctx.restore();
   }
