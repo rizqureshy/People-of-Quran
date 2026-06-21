@@ -475,14 +475,17 @@ class PQGraphGL {
       this._orbitPose = { pos: this.camera.position.clone(), target: this.controls.target.clone() };
     }
     this._cascade = true; this._focus = null;
-    // Keep controls live but zoom-only. This lets the wheel/pinch dolly the
-    // camera *into the cascade*, instead of the browser page-zooming the whole
-    // document (which would scale the HTML detail panel along with it).
+    // Keep controls live but lock rotation: let the wheel/pinch dolly the
+    // camera *into the cascade* and let click-drag / one-finger-drag PAN it
+    // left/right/up, instead of the browser page-zooming or doing nothing.
     this.controls.enabled = true;
     this.controls.enableRotate = false;
-    this.controls.enablePan = false;
+    this.controls.enablePan = true;
     this.controls.enableZoom = true;
+    this.controls.screenSpacePanning = true;
     this.controls.autoRotate = false;
+    this.controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+    this.controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
     if (this._edgeLines) this._edgeLines.visible = false;
     if (this._labelGroup) this._labelGroup.visible = false;
     if (this._radiance) this._radiance.visible = false;
@@ -561,6 +564,10 @@ class PQGraphGL {
       fromTar: this.controls.target.clone(), toTar: pose.target.clone(),
       t: 0, dur: 0.85, onDone: () => {
         this.controls.enabled = true; this.controls.enableRotate = true; this.controls.autoRotate = true;
+        // Restore the galaxy's default orbit input mapping.
+        this.controls.enablePan = false;
+        this.controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+        this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
       }
     };
   }
