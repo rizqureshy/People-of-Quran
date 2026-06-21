@@ -74,19 +74,41 @@ function cardTexture(person, depict) {
   // seal
   const ex = pad + emR, ey = H / 2;
   if (depict) depict.drawSeal(x, ex, ey, emR, person, { glow: false });
-  // name + title
+  // name + cross-tradition alt-name + title
   const tx = ex + emR + 14;
   const maxW = W - tx - pad;
-  x.textAlign = 'left'; x.fillStyle = '#eaf2ff';
-  x.font = "600 27px 'Inter', system-ui, sans-serif";
+  x.textAlign = 'left';
   x.textBaseline = 'alphabetic';
-  fillClipped(x, person.name, tx, H / 2 - 4, maxW);
+
+  // The Bible/Greek (Latin-script) name, shown unless it is already the
+  // displayed name or already sits in the title — so every shared figure
+  // carries its cross-tradition identity on the card, not just the Quranic one.
+  const nm = person.names || {};
+  let alt = nm.bible || nm.biblical || nm.greek || '';
+  const title = person.title || '';
+  const altPrimary = alt.split(/[/(]/)[0].trim();   // "Jesus / Christ" -> "Jesus"
+  if (alt && (altPrimary.toLowerCase() === (person.name || '').toLowerCase() ||
+              (altPrimary && title.indexOf(altPrimary) >= 0))) alt = '';
+
+  const nameY = alt ? H / 2 - 17 : H / 2 - 4;
+  x.fillStyle = '#eaf2ff';
+  x.font = "600 27px 'Inter', system-ui, sans-serif";
+  fillClipped(x, person.name, tx, nameY, maxW);
+
+  let ty = nameY;
+  if (alt) {
+    x.font = "600 16px 'Inter', system-ui, sans-serif";
+    x.fillStyle = 'rgba(240,201,78,0.92)';
+    fillClipped(x, alt, tx, nameY + 21, maxW);
+    ty = nameY + 21;
+  }
+
   x.font = "19px 'Inter', system-ui, sans-serif"; x.fillStyle = '#9fb0d0';
-  fillClipped(x, person.title || '', tx, H / 2 + 22, maxW);
+  fillClipped(x, title, tx, ty + 22, maxW);
   // referenced-but-not-named marker
   if (!person.named) {
     x.font = "italic 14px 'Inter', sans-serif"; x.fillStyle = 'rgba(240,201,78,0.8)';
-    fillClipped(x, '✦ referenced', tx, H / 2 + 42, maxW);
+    fillClipped(x, '✦ referenced', tx, ty + 40, maxW);
   }
 
   const t = new THREE.CanvasTexture(c);
