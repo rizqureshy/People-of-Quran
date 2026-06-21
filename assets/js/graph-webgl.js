@@ -609,6 +609,7 @@ class PQGraphGL {
       color: GOLD, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false
     }));
     this._connLine.renderOrder = 0;
+    this._connLine.frustumCulled = false;   // positions update every frame; never cull the threads
     this.scene.add(this._connLine);
     this._updateConnectors();
   }
