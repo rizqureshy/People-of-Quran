@@ -1,10 +1,24 @@
 # People of Scriptures
 
 > A living, interconnected knowledge universe of every human being mentioned,
-> referenced, implied, or connected to the Quran.
+> referenced, implied, or connected across the Quran, the Bible, and the Torah.
 
-This is **not** a Quran encyclopedia, a tafsir database, or a family tree. It is
-an exploration of the *human stories* that carry the Quran's lessons — built as
+Scripture can feel like a wall of names and rules — distant, and hard to step
+into. But underneath, it is a story about people: prophets and doubters, mothers
+and kings, the faithful and the defiant. **People of Scriptures** turns that
+human web into a universe you can wander — everyone who appears across the Quran,
+the Bible, and the Torah, shown as a glowing seal tied to the people they loved,
+opposed, taught, or descended from.
+
+It is not a sermon or a test, and it asks you to accept nothing — just to be
+curious. Pick anyone and see who came before them and who came after; trace how a
+single family carries one thread across thousands of years and three faiths. The
+goal is to lower the barrier to these stories, especially for a younger
+generation: to meet the people behind the verses as *people*, and to discover how
+much the world's great religions quietly share.
+
+This is **not** a religious authority, an encyclopedia, or a family tree. It is
+an exploration of the *human stories* that carry scripture's lessons — built as
 a **living canvas** you can wander through, where every person, relationship,
 story, and lesson connects to a larger narrative.
 

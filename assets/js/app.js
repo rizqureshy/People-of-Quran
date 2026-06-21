@@ -937,7 +937,7 @@
     var STEPS = [
       {
         title: "People of Scriptures",
-        body: "A living universe of every person mentioned — or referred to — across the Quran, the Bible and the Torah. Each is a glowing seal orbiting the core of light.",
+        body: "Scripture can feel like a wall of names and rules — distant, and hard to step into. But underneath, it is a story about people: prophets and doubters, mothers and kings, the faithful and the defiant. This is that human web made into a universe you can wander — everyone who appears across the Quran, the Bible and the Torah, each a glowing seal tied to those they loved, opposed, taught, or came from.</p><p>It is not a sermon or a test — just curiosity. Pick anyone, see who came before them and who came after, and watch a single family carry one thread across millennia and three faiths. The aim is simply to meet the people behind the verses as people — and to discover how much these traditions quietly share.",
         art: '<svg viewBox="0 0 240 132" aria-hidden="true">' +
           '<circle class="g-faint" cx="120" cy="66" r="50"/><circle class="g-faint" cx="120" cy="66" r="32"/>' +
           '<circle class="gcore-glow" cx="120" cy="66" r="13" fill="#f0c94e"/>' +
