@@ -443,6 +443,76 @@ body {
 }
 .hero-enter:hover { background: rgba(216,168,56,0.26); color: #fff; transform: translateY(-1px); }
 
+/* ---------- First-time guided tour ---------- */
+.guide {
+  position: fixed; inset: 0; z-index: 60;
+  display: none; align-items: center; justify-content: center;
+  background: radial-gradient(1200px 800px at 50% 40%, rgba(10,12,28,0.82), rgba(2,3,8,0.92));
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  padding: 20px;
+}
+.guide.show { display: flex; animation: guideIn 0.35s ease; }
+@keyframes guideIn { from { opacity: 0; } to { opacity: 1; } }
+.guide-card {
+  position: relative; width: min(560px, 94vw);
+  background: rgba(12, 15, 30, 0.92);
+  border: 1px solid var(--glass-stroke); border-radius: 20px;
+  box-shadow: var(--shadow); padding: 30px 30px 20px;
+  text-align: center;
+}
+.guide-skip {
+  position: absolute; top: 14px; right: 14px;
+  background: transparent; border: none; color: var(--ink-faint);
+  font-size: 12.5px; cursor: pointer; letter-spacing: 0.3px;
+}
+.guide-skip:hover { color: var(--ink); }
+.guide-stage { min-height: 252px; position: relative; }
+.guide-step { display: none; }
+.guide-step.active { display: block; animation: stepIn 0.32s ease; }
+@keyframes stepIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.guide-art {
+  height: 132px; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+.guide-art svg { width: 100%; height: 100%; }
+.guide-step h3 {
+  font-family: var(--serif); font-size: 22px; margin: 0 0 8px; color: var(--ink);
+  font-weight: 600;
+}
+.guide-step p {
+  margin: 0 auto; max-width: 420px; font-size: 14px; line-height: 1.6; color: var(--ink-dim);
+}
+.guide-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line);
+}
+.guide-dots { display: flex; gap: 7px; }
+.gdot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(150,170,230,0.25); cursor: pointer; transition: all 0.2s;
+}
+.gdot.on { background: var(--gold-soft); box-shadow: 0 0 8px rgba(240,201,78,0.6); }
+.guide-nav { display: flex; gap: 8px; }
+.guide-btn {
+  background: rgba(216,168,56,0.16); border: 1px solid var(--gold);
+  color: var(--gold-soft); font-size: 13.5px; padding: 9px 18px; border-radius: 999px;
+  cursor: pointer; transition: all 0.16s; font-family: var(--font);
+}
+.guide-btn:hover { background: rgba(216,168,56,0.3); color: #fff; }
+.guide-btn.ghost { background: transparent; border-color: var(--line); color: var(--ink-dim); }
+.guide-btn.ghost:hover { border-color: var(--gold); color: var(--ink); }
+/* tour illustration palette */
+.g-core { fill: #f0c94e; }
+.g-node { fill: rgba(150,170,230,0.5); }
+.g-node.gold { fill: var(--gold-soft); }
+.g-line { stroke: rgba(216,168,56,0.5); stroke-width: 1.5; fill: none; }
+.g-faint { stroke: rgba(150,170,230,0.3); stroke-width: 1; fill: none; }
+.g-label { fill: var(--ink-faint); font-size: 9px; font-family: var(--font); }
+@media (max-width: 560px) {
+  .guide-card { padding: 24px 18px 16px; }
+  .guide-step p { font-size: 13px; }
+}
+
 /* ---------- Timeline / era ribbon ---------- */
 .era-ribbon {
   position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 6;

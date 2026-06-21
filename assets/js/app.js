@@ -930,6 +930,103 @@
     }
   }
 
+  /* ---- First-time guided tour ---- */
+  function setupGuide(beginExperience, firstRun) {
+    var guide = document.getElementById("guide");
+    if (!guide) return;
+    var STEPS = [
+      {
+        title: "People of Scriptures",
+        body: "A living universe of every person mentioned — or referred to — across the Quran, the Bible and the Torah. Each is a glowing seal orbiting the core of light.",
+        art: '<svg viewBox="0 0 240 132" aria-hidden="true">' +
+          '<circle class="g-faint" cx="120" cy="66" r="48"/><circle class="g-faint" cx="120" cy="66" r="30"/>' +
+          '<circle class="g-core" cx="120" cy="66" r="9"/>' +
+          '<circle class="g-node gold" cx="168" cy="66" r="4.5"/><circle class="g-node" cx="90" cy="38" r="4.5"/>' +
+          '<circle class="g-node" cx="150" cy="100" r="4.5"/><circle class="g-node" cx="76" cy="88" r="4"/>' +
+          '<circle class="g-node gold" cx="120" cy="22" r="4.5"/><circle class="g-node" cx="194" cy="42" r="3.5"/>' +
+          '<circle class="g-node" cx="52" cy="58" r="3.5"/></svg>'
+      },
+      {
+        title: "The Houses",
+        body: "Families and peoples float as their own constellations — Ibrahim's family, the House of Yaqub, Bani Israel and more. Drag to orbit, scroll to zoom, and let the families settle around you.",
+        art: '<svg viewBox="0 0 240 132" aria-hidden="true">' +
+          '<circle class="g-node gold" cx="52" cy="40" r="5.5"/><circle class="g-node" cx="36" cy="56" r="4"/><circle class="g-node" cx="66" cy="54" r="4"/><circle class="g-node" cx="52" cy="66" r="3.5"/>' +
+          '<text class="g-label" x="52" y="86" text-anchor="middle">IBRAHIM’S FAMILY</text>' +
+          '<circle class="g-node gold" cx="138" cy="30" r="5.5"/><circle class="g-node" cx="122" cy="44" r="4"/><circle class="g-node" cx="154" cy="44" r="4"/>' +
+          '<text class="g-label" x="138" y="62" text-anchor="middle">HOUSE OF YAQUB</text>' +
+          '<circle class="g-node gold" cx="186" cy="92" r="5.5"/><circle class="g-node" cx="170" cy="106" r="4"/><circle class="g-node" cx="202" cy="104" r="4"/>' +
+          '<text class="g-label" x="186" y="124" text-anchor="middle">BANI ISRAEL</text></svg>'
+      },
+      {
+        title: "The Sources",
+        body: "Every statement keeps its origin. Each person separates the Quran, Bible, Torah, Tradition and Historical scholarship — and shows their name across traditions (Yunus is also Jonah).",
+        art: '<svg viewBox="0 0 240 132" aria-hidden="true">' +
+          '<g font-family="Inter, system-ui, sans-serif" font-size="12">' +
+          '<circle cx="64" cy="16" r="5.5" fill="#f0c94e"/><text x="78" y="20" fill="#eaf2ff">Quran</text>' +
+          '<circle cx="64" cy="40" r="5.5" fill="#6ff7ff"/><text x="78" y="44" fill="#eaf2ff">Bible</text>' +
+          '<circle cx="64" cy="64" r="5.5" fill="#b388ff"/><text x="78" y="68" fill="#eaf2ff">Torah</text>' +
+          '<circle cx="64" cy="88" r="5.5" fill="#ff6fb5"/><text x="78" y="92" fill="#eaf2ff">Tradition</text>' +
+          '<circle cx="64" cy="112" r="5.5" fill="#9fb0d0"/><text x="78" y="116" fill="#eaf2ff">Historical</text>' +
+          '</g></svg>'
+      },
+      {
+        title: "The Explorer",
+        body: "Tap anyone to bring them to the centre. Those who came before fan to the left, those who came after to the right. Tap a card to travel the lineage; tap empty space to return.",
+        art: '<svg viewBox="0 0 240 132" aria-hidden="true">' +
+          '<path class="g-line" d="M120 64 L62 28"/><path class="g-line" d="M120 64 L58 64"/><path class="g-line" d="M120 64 L62 100"/>' +
+          '<path class="g-line" d="M120 64 L178 28"/><path class="g-line" d="M120 64 L182 64"/><path class="g-line" d="M120 64 L178 100"/>' +
+          '<circle class="g-node" cx="62" cy="28" r="5"/><circle class="g-node" cx="58" cy="64" r="5"/><circle class="g-node" cx="62" cy="100" r="5"/>' +
+          '<circle class="g-node" cx="178" cy="28" r="5"/><circle class="g-node" cx="182" cy="64" r="5"/><circle class="g-node" cx="178" cy="100" r="5"/>' +
+          '<circle class="g-node gold" cx="120" cy="64" r="8"/>' +
+          '<text class="g-label" x="60" y="124" text-anchor="middle">← BEFORE</text>' +
+          '<text class="g-label" x="180" y="124" text-anchor="middle">AFTER →</text></svg>'
+      }
+    ];
+
+    var stage = document.getElementById("guide-stage");
+    var dotsEl = document.getElementById("guide-dots");
+    var back = document.getElementById("guide-back");
+    var next = document.getElementById("guide-next");
+    var skip = document.getElementById("guide-skip");
+    var idx = 0, pendingBegin = false;
+
+    stage.innerHTML = STEPS.map(function (s, i) {
+      return '<div class="guide-step' + (i === 0 ? " active" : "") + '">' +
+        '<div class="guide-art">' + s.art + '</div><h3>' + s.title + '</h3><p>' + s.body + '</p></div>';
+    }).join("");
+    dotsEl.innerHTML = STEPS.map(function (s, i) {
+      return '<span class="gdot' + (i === 0 ? " on" : "") + '" data-i="' + i + '"></span>';
+    }).join("");
+
+    function show(i) {
+      idx = Math.max(0, Math.min(STEPS.length - 1, i));
+      Array.prototype.forEach.call(stage.children, function (el, j) { el.classList.toggle("active", j === idx); });
+      Array.prototype.forEach.call(dotsEl.children, function (el, j) { el.classList.toggle("on", j === idx); });
+      back.style.visibility = idx === 0 ? "hidden" : "visible";
+      next.textContent = idx === STEPS.length - 1 ? "Enter the universe →" : "Next →";
+    }
+    function open(begin) {
+      pendingBegin = !!begin;
+      guide.classList.add("show"); guide.setAttribute("aria-hidden", "false"); show(0);
+    }
+    function close() {
+      guide.classList.remove("show"); guide.setAttribute("aria-hidden", "true");
+      try { localStorage.setItem("pos_guide_v1", "1"); } catch (e) {}
+      if (pendingBegin && beginExperience) { pendingBegin = false; beginExperience(); }
+    }
+
+    back.onclick = function () { show(idx - 1); };
+    next.onclick = function () { if (idx === STEPS.length - 1) close(); else show(idx + 1); };
+    skip.onclick = close;
+    Array.prototype.forEach.call(dotsEl.children, function (el) {
+      el.onclick = function () { show(parseInt(el.getAttribute("data-i"), 10)); };
+    });
+    var openBtn = document.getElementById("guide-open");
+    if (openBtn) openBtn.onclick = function () { open(false); };
+
+    if (firstRun) open(true);
+  }
+
   function init() {
     wireHero();                 // guarantee the Enter button responds
     try {
@@ -1036,13 +1133,26 @@
     document.getElementById("stat-stories").textContent = DATA.stories.length;
 
     // Hero is already wired in wireHero(). Restore a shared view from the URL,
-    // otherwise play the cinematic intro.
+    // otherwise — for returning visitors — play the cinematic intro. First-time
+    // visitors get the guided tour, which then launches the fly-through.
     var restored = applyHash();
+    var guideWillShow = false;
+    try { guideWillShow = !localStorage.getItem("pos_guide_v1"); } catch (e) {}
+    guideWillShow = guideWillShow && !restored;
+
+    function beginExperience() {
+      hideHero();
+      if (graph && graph.startIntro && mode === "3d") graph.startIntro();
+    }
+
     if (restored) { hideHero(); }
+    else if (guideWillShow) { /* the guide will call beginExperience() on close */ }
     else if (graph.startIntro) {
       setTimeout(function () { if (mode === "3d") graph.startIntro(); }, 140);
       setTimeout(hideHero, 5200);                 // hero lifts as the fly-through settles
     } else { setTimeout(hideHero, 2500); }
+
+    setupGuide(beginExperience, guideWillShow);
 
     // Keep the view in sync with back/forward navigation.
     window.addEventListener("hashchange", function () {

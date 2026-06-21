@@ -506,6 +506,7 @@ class PQGraphGL {
     if (this._edgeLines) this._edgeLines.visible = false;
     if (this._labelGroup) this._labelGroup.visible = false;
     if (this._radiance) this._radiance.visible = false;
+    if (this.core) this.core.visible = false;          // the core would cover the centred focus
     if (this._pathLine) this._pathLine.visible = false;
 
     const colGap = 250, rowMax = 760;
@@ -580,6 +581,7 @@ class PQGraphGL {
     if (this._edgeLines) this._edgeLines.visible = true;
     if (this._labelGroup) this._labelGroup.visible = this.showConstellations !== false;
     if (this._radiance) this._radiance.visible = true;
+    if (this.core) this.core.visible = true;
     if (this._pathLine) this._pathLine.visible = true;
     if (this._connLine) this._connLine.visible = false;
     this._refreshNodeStates();              // targets back to home

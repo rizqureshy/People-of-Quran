@@ -96,6 +96,7 @@
         <button id="path-btn" class="ctrl-btn" title="Find the path between two people">⤳ Find a path</button>
         <button id="recenter-btn" class="ctrl-btn" title="Recenter the universe">⊕ Recenter</button>
         <button id="reset-btn" class="ctrl-btn" title="Clear filters and selection">↺ Reset</button>
+        <button id="guide-open" class="ctrl-btn" title="How this works — a quick tour">? Guide</button>
       </div>
 
       <div id="path-panel" class="path-panel"></div>
@@ -110,6 +111,21 @@
 
     <!-- Right: detail drawer -->
     <aside class="detail" id="detail"></aside>
+  </div>
+
+  <!-- First-time splash / guided tour -->
+  <div id="guide" class="guide" aria-hidden="true">
+    <div class="guide-card" role="dialog" aria-label="A quick tour">
+      <button id="guide-skip" class="guide-skip" aria-label="Skip the tour">Skip ✕</button>
+      <div class="guide-stage" id="guide-stage"></div>
+      <div class="guide-foot">
+        <div class="guide-dots" id="guide-dots"></div>
+        <div class="guide-nav">
+          <button id="guide-back" class="guide-btn ghost">Back</button>
+          <button id="guide-next" class="guide-btn">Next →</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="assets/js/data.js"></script>
