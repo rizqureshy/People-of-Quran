@@ -134,6 +134,42 @@
     muhammad: "lamp", zayd: "crescent", "abu-lahab": "flame", "umm-jamil": "rope"
   };
 
+  /* More bespoke motifs across the prophets, kings, judges, tribes and
+   * apostles — reusing the shape vocabulary above (plus "sheaf"). */
+  Object.assign(MOTIF, {
+    idris: "scroll", yusha: "wall", ilyas: "flame", "al-yasa": "drop", hizqil: "scroll",
+    shaya: "scroll", armiya: "city", daniyal: "crown", uzair: "scroll", "dhul-kifl": "tablet",
+    saba: "sun", "ashab-ukhdud": "flame", "ashab-al-jannah": "tree", "ashab-al-rass": "well",
+    "qawm-tubba": "crown", "al-rum": "crescent",
+    shem: "star", nahor: "star", yahudha: "crown", lawi: "tablet", dinah: "rose",
+    rahil: "drop", leah: "eye", keturah: "house", amram: "house", hur: "arch",
+    bezalel: "cube", eleazar: "tablet", ithamar: "tablet", "nadab-abihu": "flame",
+    "dathan-abiram": "blade", "pharaohs-daughter": "basket", balaam: "wind",
+    jesse: "tree", boaz: "sheaf", ruth: "sheaf", naomi: "house", obed: "star",
+    hezekiah: "sun", josiah: "scroll", jeroboam: "calf", rehoboam: "crown", manasseh: "idol",
+    absalom: "blade", joab: "sword", abner: "sword", uriah: "sword", bathsheba: "rose",
+    michal: "house", delilah: "blade", deborah: "palm", barak: "sword", ehud: "blade",
+    othniel: "sword", jephthah: "sword", elizabeth: "drop", martha: "house",
+    "paul-tarsus": "scroll", "james-zebedee": "fish", "herod-agrippa": "crown",
+    "yusuf-najjar": "house"
+  });
+
+  /* Fallback glyph by archetype, so every seal carries a meaningful motif
+   * even when the person has no bespoke one. The first matching archetype
+   * (archetypes are listed most-significant first) wins. */
+  var ARCH_MOTIF = {
+    prophet: "scroll", reformer: "scale", "faithful-companion": "crescent",
+    "truth-seeker": "sparkle", "believing-woman": "rose", "arrogant-elite": "crown",
+    repentant: "drop", advisor: "tablet", tyrant: "sword", oppressed: "group",
+    martyr: "flame", hypocrite: "blade", skeptic: "wind"
+  };
+  function motifFor(person) {
+    if (MOTIF[person.id]) return MOTIF[person.id];
+    var a = person.archetypes || [];
+    for (var i = 0; i < a.length; i++) { if (ARCH_MOTIF[a[i]]) return ARCH_MOTIF[a[i]]; }
+    return null;
+  }
+
   /* Render a motif glyph centred at (cx,cy), fitting within radius s. */
   function drawMotif(ctx, cx, cy, s, key, ink) {
     ink = ink || "#f4ead2";
@@ -355,6 +391,12 @@
         ctx.quadraticCurveTo(cx - 0.22 * s, cy - 0.1 * s, cx, cy - 0.5 * s); ctx.fill(); break;
       case "crescent":
         P(); arc(0, 0, 0.8, 0.6, Math.PI * 2 - 0.6); ctx.stroke(); break;
+      case "sheaf":
+        P(); M(0, 0.85); L(0, -0.85); ctx.stroke();
+        P(); M(0, 0.85); L(-0.42, -0.7); ctx.stroke();
+        P(); M(0, 0.85); L(0.42, -0.7); ctx.stroke();
+        ctx.lineWidth *= 0.8;
+        P(); M(-0.45, 0.28); L(0.45, 0.28); ctx.stroke(); break;
       case "rope":
         P(); arc(-0.3, 0, 0.4, 0, Math.PI * 2); ctx.stroke();
         P(); arc(0.3, 0, 0.4, 0, Math.PI * 2); ctx.stroke(); break;
@@ -446,8 +488,8 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Story motif at the heart of the seal
-    var motif = MOTIF[person.id];
+    // Story motif at the heart of the seal (bespoke, else by archetype)
+    var motif = motifFor(person);
     if (motif) drawMotif(ctx, cx, cy, R * 0.21, motif, "#f4ead2");
     else { ctx.beginPath(); ctx.arc(cx, cy, R * 0.08, 0, Math.PI * 2); ctx.fillStyle = GOLD; ctx.fill(); }
 
