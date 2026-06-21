@@ -64,16 +64,29 @@ function cardTexture(person, depict) {
   const x = c.getContext('2d'); x.scale(S, S);
 
   const prophet = (person.archetypes || []).indexOf('prophet') >= 0;
+  // Refusers, tyrants, the arrogant and the defiant carry no light; everyone
+  // else (the prophets, the believing, the oppressed, the repentant, the
+  // nations who kept faith) glows — the bloom pass turns the gold rim and
+  // seal aura into an outward glow.
+  const NEG = { tyrant: 1, 'arrogant-elite': 1, hypocrite: 1, skeptic: 1 };
+  const ALWAYS = { prophet: 1, 'faithful-companion': 1, martyr: 1, 'believing-woman': 1 };
+  const arch = person.archetypes || [];
+  // Dark only if defiance is the DEFINING trait (primary archetype) and the
+  // figure is not a prophet/companion/martyr/believing woman.
+  const positive = arch.some(function (a) { return ALWAYS[a]; }) || !NEG[arch[0]];
   const pad = 16, emR = 44;
   // glass body
-  roundRect(x, 2, 2, W - 4, H - 4, 22);
-  x.fillStyle = 'rgba(10,12,24,0.82)'; x.fill();
-  x.lineWidth = 2.5;
-  x.strokeStyle = prophet ? 'rgba(216,168,56,0.85)' : 'rgba(150,170,230,0.4)';
-  x.stroke();
+  roundRect(x, 4, 4, W - 8, H - 8, 22);
+  x.fillStyle = positive ? 'rgba(10,12,24,0.82)' : 'rgba(16,13,18,0.88)'; x.fill();
+  if (positive) {
+    x.lineWidth = 7; x.strokeStyle = 'rgba(240,201,78,0.16)'; x.stroke();   // soft halo for bloom
+    x.lineWidth = 2.6; x.strokeStyle = prophet ? 'rgba(245,210,110,0.95)' : 'rgba(224,180,90,0.7)'; x.stroke();
+  } else {
+    x.lineWidth = 2.2; x.strokeStyle = 'rgba(120,130,156,0.5)'; x.stroke(); // cold, unlit
+  }
   // seal
   const ex = pad + emR, ey = H / 2;
-  if (depict) depict.drawSeal(x, ex, ey, emR, person, { glow: false });
+  if (depict) depict.drawSeal(x, ex, ey, emR, person, { glow: positive });
   // name + cross-tradition alt-name + title
   const tx = ex + emR + 14;
   const maxW = W - tx - pad;
