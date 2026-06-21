@@ -272,10 +272,28 @@
     }
     d.classList.add("open");
 
-    var namesRows = Object.keys(p.names || {}).map(function (k) {
-      return '<div class="name-row"><span class="name-key">' + k + '</span><span class="name-val">' +
-        p.names[k] + '</span></div>';
-    }).join("");
+    // Cross-tradition identity, shown evenly and in a stable order
+    // (Quran · Bible · Torah/Hebrew · Greek · Arabic · Tradition · Historical),
+    // with duplicate values (e.g. legacy "biblical" + "bible") collapsed.
+    var NAME_LABELS = {
+      quran: "Quran", bible: "Bible", biblical: "Bible", torah: "Torah",
+      hebrew: "Hebrew", greek: "Greek", arabic: "Arabic",
+      tradition: "Tradition", historical: "Historical"
+    };
+    var NAME_ORDER = ["quran", "bible", "biblical", "torah", "hebrew", "greek", "arabic", "tradition", "historical"];
+    var _nm = p.names || {};
+    var _seenName = {};
+    function nameRow(k) {
+      if (!_nm[k]) return "";
+      var label = NAME_LABELS[k] || (k.charAt(0).toUpperCase() + k.slice(1));
+      var val = _nm[k];
+      var sig = label + "::" + val;
+      if (_seenName[sig]) return "";           // collapse identical label+value
+      _seenName[sig] = true;
+      return '<div class="name-row"><span class="name-key">' + label + '</span><span class="name-val">' + val + '</span></div>';
+    }
+    var namesRows = NAME_ORDER.map(nameRow).join("");
+    namesRows += Object.keys(_nm).filter(function (k) { return NAME_ORDER.indexOf(k) < 0; }).map(nameRow).join("");
 
     var archChips = (p.archetypes || []).map(function (a) {
       var arch = archById[a];
