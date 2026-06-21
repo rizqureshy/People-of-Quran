@@ -6,16 +6,18 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="15" fill="#0a0a1c"/>
+  <!-- Unifying ring -->
+  <circle cx="32" cy="32" r="28" fill="none" stroke="url(#g)" stroke-width="2.4"/>
   <!-- Star of David (Judaism) -->
-  <g fill="none" stroke="url(#g)" stroke-width="2.6" stroke-linejoin="round">
-    <polygon points="32,8 42.39,26 21.61,26"/>
-    <polygon points="32,32 21.61,14 42.39,14"/>
+  <g fill="none" stroke="url(#g)" stroke-width="2.2" stroke-linejoin="round">
+    <polygon points="32,12 40.66,27 23.34,27"/>
+    <polygon points="32,32 23.34,17 40.66,17"/>
   </g>
   <!-- Crescent (Islam) -->
-  <path d="M23 35 A11 11 0 1 0 23 57 A8 8 0 1 1 23 35 Z" fill="url(#g)"/>
+  <path d="M26 35 A9 9 0 1 0 26 53 A6.6 6.6 0 1 1 26 35 Z" fill="url(#g)"/>
   <!-- Cross (Christianity) -->
   <g fill="url(#g)">
-    <rect x="43.2" y="35" width="3.6" height="22" rx="1.2"/>
-    <rect x="38.5" y="43" width="13" height="3.6" rx="1.2"/>
+    <rect x="41.4" y="35" width="3.2" height="18" rx="1.1"/>
+    <rect x="37.5" y="41.5" width="11" height="3.2" rx="1.1"/>
   </g>
 </svg>
