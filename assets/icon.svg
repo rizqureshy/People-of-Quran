@@ -7,17 +7,7 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="15" fill="#0a0a1c"/>
-  <!-- Light of revelation -->
-  <polygon points="32,4 34.26,11.74 42,14 34.26,16.26 32,24 29.74,16.26 22,14 29.74,11.74" fill="url(#g)"/>
-  <g stroke="url(#g)" stroke-width="1.7" stroke-linecap="round">
-    <line x1="38.5" y1="8" x2="41" y2="5.5"/>
-    <line x1="25.5" y1="8" x2="23" y2="5.5"/>
-  </g>
-  <!-- Open book -->
-  <g fill="none" stroke="url(#g)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M32 37 Q20 36 9 42 L12 52 Q22 50 32 51 Z"/>
-    <path d="M32 37 Q44 36 55 42 L52 52 Q42 50 32 51 Z"/>
-    <path d="M15 46 Q22 45 29 46" stroke-width="1.4" opacity="0.65"/>
-    <path d="M35 46 Q42 45 49 46" stroke-width="1.4" opacity="0.65"/>
-  </g>
+  <text x="32" y="34" text-anchor="middle" dominant-baseline="central"
+        font-size="44" fill="url(#g)"
+        font-family="'Geeza Pro','Noto Sans Arabic','Noto Naskh Arabic','Amiri',serif">۞</text>
 </svg>
