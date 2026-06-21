@@ -428,7 +428,7 @@
     if (graph.focusCascade && !state.pathMode && !state.activePath) {
       var cd = cascadeData(id);
       var drawerPx = _desktop() ? 380 : 0;
-      graph.focusCascade(id, cd.tiers, { pairs: cd.pairs, drawerPx: drawerPx });
+      graph.focusCascade(id, cd.tiers, { pairs: cd.pairs, sides: cd.sides, drawerPx: drawerPx });
       enterFocusUI();
       if (!state._cascadeHinted) { state._cascadeHinted = true; flashBanner("Relationship view — tap a card to follow · tap empty space to return"); }
     } else if (focus && graph.focusNode) {
@@ -451,10 +451,14 @@
   }
 
   // Breadth-first tiers (1,2,3) of relations around a focus, with the
-  // parent→child pairs used to draw the connector threads.
+  // parent→child pairs for the connector threads and a left/right side for
+  // each node: those who came BEFORE the focus (ancestors, predecessors,
+  // teachers) go left; those who came after or alongside (descendants,
+  // students, family, contemporaries) go right.
   function cascadeData(focusId) {
     var adj = adjacency();
     var seen = {}; seen[focusId] = 0;
+    var timeDir = {}; timeDir[focusId] = 0;
     var tiers = [[], [], []], pairs = [];
     var frontier = [focusId];
     for (var depth = 1; depth <= 3; depth++) {
@@ -462,7 +466,9 @@
       frontier.forEach(function (pid) {
         (adj[pid] || []).forEach(function (nid) {
           if (seen[nid] !== undefined) return;
-          seen[nid] = depth; tiers[depth - 1].push(nid); pairs.push([pid, nid]); next.push(nid);
+          seen[nid] = depth;
+          timeDir[nid] = timeDir[pid] + timeDirBetween(pid, nid);
+          tiers[depth - 1].push(nid); pairs.push([pid, nid]); next.push(nid);
         });
       });
       frontier = next;
@@ -472,8 +478,47 @@
     var keep = {}; keep[focusId] = true;
     tiers.forEach(function (t) { t.forEach(function (id) { keep[id] = true; }); });
     pairs = pairs.filter(function (pr) { return keep[pr[0]] && keep[pr[1]]; });
-    return { tiers: tiers, pairs: pairs };
+    // Resolve each kept node to a side: -1 = before (left), +1 = after/with
+    // (right). Era is the reliable global signal — earlier era to the left;
+    // within the same era, the declared relationship direction breaks the tie.
+    var fEra = eraIndexOf(focusId);
+    var sides = {};
+    Object.keys(keep).forEach(function (id) {
+      if (id === focusId) return;
+      var e = eraIndexOf(id);
+      if (e >= 0 && fEra >= 0 && e !== fEra) { sides[id] = e < fEra ? -1 : 1; return; }
+      var td = timeDir[id];                         // same/unknown era → lineage direction
+      sides[id] = td < 0 ? -1 : 1;                  // contemporaries default to the right
+    });
+    return { tiers: tiers, pairs: pairs, sides: sides };
   }
+
+  // Whether `b` comes after (+1), before (-1) or alongside (0) `a`, read from
+  // the declared relationship type between them (in either direction).
+  var _relDir = null;
+  function relDirMap() {
+    if (_relDir) return _relDir;
+    _relDir = {};
+    DATA.people.forEach(function (p) {
+      (p.relations || []).forEach(function (r) {
+        if (!personById[r.to]) return;
+        (_relDir[p.id] = _relDir[p.id] || {})[r.to] = r.type;
+      });
+    });
+    return _relDir;
+  }
+  function typeSign(t) {
+    if (t === "ancestor" || t === "parent" || t === "teacher") return 1;   // the `to` comes after
+    if (t === "descendant" || t === "child" || t === "student" || t === "successor") return -1; // before
+    return 0;                                                              // spouse, sibling, ally, opponent, kin…
+  }
+  function timeDirBetween(a, b) {
+    var m = relDirMap();
+    if (m[a] && m[a][b] !== undefined) return typeSign(m[a][b]);
+    if (m[b] && m[b][a] !== undefined) return -typeSign(m[b][a]);
+    return 0;
+  }
+  function eraIndexOf(id) { var p = personById[id]; return p ? ERA_ORDER.indexOf(p.era) : -1; }
 
   /* ---- Path finding between two people ---- */
   var _adj = null;

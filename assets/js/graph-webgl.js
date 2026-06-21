@@ -508,20 +508,28 @@ class PQGraphGL {
     if (this._radiance) this._radiance.visible = false;
     if (this._pathLine) this._pathLine.visible = false;
 
-    const colGap = 320, rowMax = 760;
-    const colX = [-1.5 * colGap, -0.5 * colGap, 0.5 * colGap, 1.5 * colGap];
+    const colGap = 250, rowMax = 760;
+    const sides = opts.sides || {};
     const active = {};
     const place = (id, x, y, k, order) => {
       const o = this.nodeObjs[id]; if (!o) return;
       o.targetPos.set(x, y, 0); o.targetK = k; o.targetOpacity = 1;
       o.sprite.renderOrder = order; active[id] = true;
     };
-    place(focusId, colX[0], 0, 1.5, 7);
-    (tiers || []).forEach((list, ti) => {
-      const t = ti + 1, N = list.length;
+    // Focus sits in the centre; each tier splits left (before) / right (after).
+    place(focusId, 0, 0, 1.5, 8);
+    const placeColumn = (list, x, t) => {
+      const N = list.length; if (!N) return;
       const gap = N > 1 ? Math.max(62, Math.min(132, rowMax / N)) : 120;
-      const k = t === 1 ? 1.18 : t === 2 ? 1.0 : 0.86;
-      list.forEach((id, i) => place(id, colX[t], (i - (N - 1) / 2) * gap, k, 6 - ti));
+      const k = t === 1 ? 1.12 : t === 2 ? 0.96 : 0.84;
+      list.forEach((id, i) => place(id, x, (i - (N - 1) / 2) * gap, k, 7 - t));
+    };
+    (tiers || []).forEach((list, ti) => {
+      const t = ti + 1;
+      const left = list.filter(id => sides[id] < 0);
+      const right = list.filter(id => !(sides[id] < 0));
+      placeColumn(left, -t * colGap, t);
+      placeColumn(right, t * colGap, t);
     });
 
     // Connector threads: focus → tier1 → tier2 → tier3 (BFS parent pairs).
@@ -543,12 +551,12 @@ class PQGraphGL {
     const aspect = Math.max(0.5, W / H);
     const tanH = Math.tan(this.camera.fov * Math.PI / 360);
     const needH = rowMax * 0.62;            // tallest a column can ever be
-    const needW = 1.5 * colGap + 260;       // half-width of the four columns
+    const needW = 3 * colGap + 200;         // half-width: three tiers each side of centre
     const D = Math.max(needH / tanH, needW / (aspect * tanH)) * 1.06;
     const halfW = D * tanH * aspect;
-    // Bias left by half the floating detail panel so the cards sit centred in
-    // the visible region rather than hiding behind it.
-    const shiftX = opts.drawerPx ? (opts.drawerPx * 0.5 * halfW / W) : 0;
+    // A gentle left bias so the right-side cards aren't fully hidden behind
+    // the floating detail panel (pan/zoom can reveal the rest).
+    const shiftX = opts.drawerPx ? (opts.drawerPx * 0.32 * halfW / W) : 0;
     const toPos = new THREE.Vector3(shiftX, 0, D);
     const toTar = new THREE.Vector3(shiftX, 0, 0);
     if (firstEntry) {
