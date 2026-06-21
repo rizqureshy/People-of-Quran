@@ -83,10 +83,10 @@ function cardTexture(person, depict) {
   fillClipped(x, person.name, tx, H / 2 - 4, maxW);
   x.font = "19px 'Inter', system-ui, sans-serif"; x.fillStyle = '#9fb0d0';
   fillClipped(x, person.title || '', tx, H / 2 + 22, maxW);
-  // unnamed marker
+  // referenced-but-not-named marker
   if (!person.named) {
     x.font = "italic 14px 'Inter', sans-serif"; x.fillStyle = 'rgba(240,201,78,0.8)';
-    fillClipped(x, '✦ unnamed', tx, H / 2 + 42, maxW);
+    fillClipped(x, '✦ referenced', tx, H / 2 + 42, maxW);
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -475,7 +475,14 @@ class PQGraphGL {
       this._orbitPose = { pos: this.camera.position.clone(), target: this.controls.target.clone() };
     }
     this._cascade = true; this._focus = null;
-    this.controls.enabled = false; this.controls.autoRotate = false;
+    // Keep controls live but zoom-only. This lets the wheel/pinch dolly the
+    // camera *into the cascade*, instead of the browser page-zooming the whole
+    // document (which would scale the HTML detail panel along with it).
+    this.controls.enabled = true;
+    this.controls.enableRotate = false;
+    this.controls.enablePan = false;
+    this.controls.enableZoom = true;
+    this.controls.autoRotate = false;
     if (this._edgeLines) this._edgeLines.visible = false;
     if (this._labelGroup) this._labelGroup.visible = false;
     if (this._radiance) this._radiance.visible = false;
@@ -552,7 +559,9 @@ class PQGraphGL {
     this._camTween = {
       fromPos: this.camera.position.clone(), toPos: pose.pos.clone(),
       fromTar: this.controls.target.clone(), toTar: pose.target.clone(),
-      t: 0, dur: 0.85, onDone: () => { this.controls.enabled = true; this.controls.autoRotate = true; }
+      t: 0, dur: 0.85, onDone: () => {
+        this.controls.enabled = true; this.controls.enableRotate = true; this.controls.autoRotate = true;
+      }
     };
   }
 
@@ -677,7 +686,7 @@ class PQGraphGL {
     try {
       if (this._intro) this._applyIntro(dt);
       else if (this._camTween) this._applyCamTween(dt);
-      else if (this._cascade) { /* hold the front-on view */ }
+      else if (this._cascade) { this.controls.update(); }   // hold view; allow zoom-only dolly
       else {
         this.controls.update();
         if (this._focus) {

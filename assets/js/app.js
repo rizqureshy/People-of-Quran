@@ -184,7 +184,7 @@
         item.innerHTML =
           '<span class="pi-dot" style="background:' + colorFor(p) + '"></span>' +
           '<span class="pi-body"><span class="pi-name">' + p.name +
-          (p.named ? '' : ' <span class="tag-unnamed">unnamed</span>') +
+          (p.named ? '' : ' <span class="tag-unnamed">referenced</span>') +
           '</span><span class="pi-title">' + (p.title || "") + '</span></span>';
         item.onclick = function () { select(p.id, true); };
         el.appendChild(item);
@@ -261,7 +261,7 @@
     var t = tiersOf(p);
     if (!t.quran && (t.bible || t.torah))
       return ' · <span class="tag-scripture">in the Bible / Torah</span>';
-    return ' · <span class="tag-unnamed">unnamed in the Quran</span>';
+    return ' · <span class="tag-unnamed">referenced</span>';
   }
 
   function renderDetail(p) {
