@@ -470,7 +470,8 @@ class PQGraphGL {
   focusCascade(focusId, tiers, opts) {
     opts = opts || {};
     if (!this.nodeObjs[focusId]) return;
-    if (!this._cascade) {
+    const firstEntry = !this._cascade;
+    if (firstEntry) {
       this._orbitPose = { pos: this.camera.position.clone(), target: this.controls.target.clone() };
     }
     this._cascade = true; this._focus = null;
@@ -489,13 +490,11 @@ class PQGraphGL {
       o.sprite.renderOrder = order; active[id] = true;
     };
     place(focusId, colX[0], 0, 1.5, 7);
-    let maxColH = rowMax * 0.2;
     (tiers || []).forEach((list, ti) => {
       const t = ti + 1, N = list.length;
       const gap = N > 1 ? Math.min(120, rowMax / N) : 120;
       const k = t === 1 ? 1.18 : t === 2 ? 1.0 : 0.86;
       list.forEach((id, i) => place(id, colX[t], (i - (N - 1) / 2) * gap, k, 6 - ti));
-      if (N) maxColH = Math.max(maxColH, (N - 1) * gap + 130);
     });
 
     // Connector threads: focus → tier1 → tier2 → tier3 (BFS parent pairs).
@@ -508,20 +507,36 @@ class PQGraphGL {
       o.targetPos.copy(o.base); o.targetOpacity = 0.03; o.targetK = 0.4; o.sprite.renderOrder = 1;
     }
 
-    // Frame the layout front-on; shift right so it clears the detail drawer.
+    // Frame the layout front-on with a CONSTANT distance, computed from the
+    // widest/tallest the layout can ever be — not the current content. That
+    // way re-selecting a different person only rearranges the cards; the
+    // camera never dollies in and out between clicks. Only the very first
+    // entry tweens in from the orbit pose.
     const W = this.canvas.clientWidth || 1, H = this.canvas.clientHeight || 1;
     const aspect = Math.max(0.5, W / H);
     const tanH = Math.tan(this.camera.fov * Math.PI / 360);
-    const needH = Math.max(maxColH / 2 + 90, 300);
-    const needW = 1.5 * colGap + 220;
+    const needH = rowMax * 0.62;            // tallest a column can ever be
+    const needW = 1.5 * colGap + 260;       // half-width of the four columns
     const D = Math.max(needH / tanH, needW / (aspect * tanH)) * 1.06;
     const halfW = D * tanH * aspect;
-    const shiftX = (opts.drawerPx ? (opts.drawerPx * halfW / W) : 0);
-    this._camTween = {
-      fromPos: this.camera.position.clone(), toPos: new THREE.Vector3(shiftX, 0, D),
-      fromTar: this.controls.target.clone(), toTar: new THREE.Vector3(shiftX, 0, 0),
-      t: 0, dur: 0.85
-    };
+    // Bias left by half the floating detail panel so the cards sit centred in
+    // the visible region rather than hiding behind it.
+    const shiftX = opts.drawerPx ? (opts.drawerPx * 0.5 * halfW / W) : 0;
+    const toPos = new THREE.Vector3(shiftX, 0, D);
+    const toTar = new THREE.Vector3(shiftX, 0, 0);
+    if (firstEntry) {
+      this._camTween = {
+        fromPos: this.camera.position.clone(), toPos: toPos,
+        fromTar: this.controls.target.clone(), toTar: toTar,
+        t: 0, dur: 0.95
+      };
+    } else {
+      // Already framed — hold the camera perfectly still; only cards move.
+      this._camTween = null;
+      this.camera.position.copy(toPos);
+      this.controls.target.copy(toTar);
+      this.camera.lookAt(toTar);
+    }
   }
 
   clearCascade() {
@@ -634,6 +649,12 @@ class PQGraphGL {
       }
     });
     window.addEventListener('resize', () => this._resize());
+    // Track the stage's own size too: collapsing the index rail or floating the
+    // detail panel changes the canvas width without firing a window resize.
+    if (typeof ResizeObserver !== 'undefined') {
+      this._ro = new ResizeObserver(() => this._resize());
+      this._ro.observe(this.canvas);
+    }
   }
   _pick() {
     this._raycaster.setFromCamera(this._pointer, this.camera);

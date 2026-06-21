@@ -69,19 +69,27 @@ body {
 /* ---------- Layout ---------- */
 .layout {
   display: grid;
-  grid-template-columns: 332px 1fr auto;
+  grid-template-columns: var(--sidebar-w, 332px) 1fr;
   height: calc(100vh - 64px);
   position: relative;
+  transition: grid-template-columns 0.34s cubic-bezier(.22,.61,.36,1);
 }
+/* Collapse the index/filters rail (desktop) — auto in relationship view. */
+.layout.nav-collapsed { --sidebar-w: 0px; }
 
 /* ---------- Sidebar ---------- */
 .sidebar {
   background: rgba(8, 10, 20, 0.5);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border-right: 1px solid var(--glass-stroke);
-  overflow-y: auto;
+  overflow: hidden auto;
+  min-width: 0;
   padding: 16px;
   display: flex; flex-direction: column; gap: 18px;
+  transition: opacity 0.22s ease;
+}
+.layout.nav-collapsed .sidebar {
+  opacity: 0; pointer-events: none; border-right-color: transparent;
 }
 .search-wrap { position: sticky; top: 0; z-index: 2; }
 #search {
@@ -292,16 +300,29 @@ body {
   font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-faint);
 }
 
-/* ---------- Detail drawer ---------- */
+/* ---------- Detail drawer (floating overlay) ----------
+ * The detail floats over the stage as a glass card rather than occupying a
+ * grid column, so opening it never resizes the WebGL canvas (no jank) and it
+ * sits cleanly above the relationship cascade. */
 .detail {
-  background: rgba(8, 10, 20, 0.62);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border-left: 1px solid var(--glass-stroke);
-  width: 0; overflow: hidden;
-  transition: width 0.28s ease;
+  position: absolute; top: 14px; right: 14px; bottom: 14px; z-index: 14;
+  background: rgba(8, 10, 20, 0.74);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 16px; box-shadow: var(--shadow);
+  width: 0; overflow: hidden; opacity: 0; pointer-events: none;
+  transform: translateX(18px);
+  transition: width 0.34s cubic-bezier(.22,.61,.36,1),
+              opacity 0.26s ease,
+              transform 0.34s cubic-bezier(.22,.61,.36,1);
 }
-.detail.open { width: 380px; }
-.detail-scroll { height: 100%; overflow-y: auto; padding: 22px; width: 380px; }
+.detail.open {
+  width: min(380px, 42vw); opacity: 1; pointer-events: auto; transform: none;
+}
+.detail-scroll { height: 100%; overflow-y: auto; padding: 22px; width: min(380px, 42vw); }
+/* When the detail is open, shift the stage controls to the left so the
+   floating panel never covers them. */
+.layout:has(.detail.open) .stage-controls { right: auto; left: 16px; }
 .detail-close {
   position: absolute; top: 12px; right: 14px; z-index: 3;
   background: var(--panel); border: 1px solid var(--line); color: var(--ink-dim);
@@ -452,9 +473,11 @@ body {
     transform: translateX(-100%); transition: transform 0.25s;
   }
   .sidebar.open { transform: translateX(0); box-shadow: var(--shadow); }
-  .detail.open { width: 100%; position: absolute; right: 0; top: 0; bottom: 0; z-index: 31; }
+  .detail.open {
+    width: 100%; inset: 0; border-radius: 0; z-index: 31;
+  }
   .detail-scroll { width: 100%; }
-  .layout:has(.detail.open) { grid-template-columns: 1fr; }
+  .layout:has(.detail.open) .stage-controls { left: auto; right: 8px; }
 
   /* Controls wrap to the top-right and shrink; the era ribbon moves to
      the bottom so the two never collide on a narrow screen. */

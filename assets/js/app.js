@@ -357,6 +357,7 @@
     d.querySelector(".detail-close").onclick = function () {
       state.selected = null;
       if (graph.clearCascade) graph.clearCascade();
+      exitFocusUI();
       graph.setSelected(null);
       renderDetail(null);
       renderPeopleList();
@@ -385,6 +386,20 @@
 
   /* ================= Behaviour ================= */
 
+  // Enter/leave the immersive relationship view: on desktop the index rail
+  // retracts so the cascade and the floating detail own the canvas.
+  var _desktop = function () { return typeof window !== "undefined" && window.innerWidth > 900; };
+  function enterFocusUI() {
+    var lay = document.querySelector(".layout");
+    if (lay && _desktop()) lay.classList.add("nav-collapsed");
+  }
+  function exitFocusUI() {
+    var lay = document.querySelector(".layout");
+    if (lay) lay.classList.remove("nav-collapsed");
+    var sb = document.getElementById("sidebar");
+    if (sb) sb.classList.remove("open");
+  }
+
   function select(id, focus) {
     var p = personById[id];
     if (!p) return;
@@ -394,8 +409,9 @@
     // Magnetic cascade: pull this person's 1st/2nd/3rd-tier relations forward.
     if (graph.focusCascade && !state.pathMode && !state.activePath) {
       var cd = cascadeData(id);
-      var drawerPx = (typeof window !== "undefined" && window.innerWidth > 900) ? 380 : 0;
+      var drawerPx = _desktop() ? 380 : 0;
       graph.focusCascade(id, cd.tiers, { pairs: cd.pairs, drawerPx: drawerPx });
+      enterFocusUI();
       if (!state._cascadeHinted) { state._cascadeHinted = true; flashBanner("Relationship view — tap a card to follow · tap empty space to return"); }
     } else if (focus && graph.focusNode) {
       graph.focusNode(id);
@@ -410,6 +426,7 @@
     state.selected = null;
     if (graph.clearCascade) graph.clearCascade();
     if (graph.setSelected) graph.setSelected(null);
+    exitFocusUI();
     renderDetail(null);
     renderPeopleList();
     if (!state.activePath) updateHash();
@@ -879,6 +896,7 @@
       state.activeEra = null;
       state.selected = null;
       if (graph.clearCascade) graph.clearCascade();
+      exitFocusUI();
       clearPath(true);
       document.getElementById("search").value = "";
       graph.setSelected(null);
@@ -889,6 +907,7 @@
     };
     document.getElementById("recenter-btn").onclick = function () {
       if (graph.clearCascade) graph.clearCascade();
+      exitFocusUI();
       if (graph.setAutoRotate) graph.setAutoRotate(true);
       graph.center();
     };
@@ -934,11 +953,16 @@
       };
     });
 
-    // Sidebar toggle (mobile)
+    // Index-panel toggle: collapses the rail on desktop, slides it over on mobile.
     var sidebarToggle = document.getElementById("sidebar-toggle");
     if (sidebarToggle) {
       sidebarToggle.onclick = function () {
-        document.getElementById("sidebar").classList.toggle("open");
+        if (window.innerWidth > 900) {
+          var lay = document.querySelector(".layout");
+          if (lay) lay.classList.toggle("nav-collapsed");
+        } else {
+          document.getElementById("sidebar").classList.toggle("open");
+        }
       };
     }
 
