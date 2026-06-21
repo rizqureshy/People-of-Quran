@@ -59,12 +59,12 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 function cardTexture(person, depict) {
   const S = 2;                       // supersample for crispness
-  const W = 360, H = 132;
+  const W = 360, H = 172;            // taller card → room for name, cross-name, title
   const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
   const x = c.getContext('2d'); x.scale(S, S);
 
   const prophet = (person.archetypes || []).indexOf('prophet') >= 0;
-  const pad = 16, emR = 40;
+  const pad = 16, emR = 44;
   // glass body
   roundRect(x, 2, 2, W - 4, H - 4, 22);
   x.fillStyle = 'rgba(10,12,24,0.82)'; x.fill();
@@ -90,25 +90,20 @@ function cardTexture(person, depict) {
   if (alt && (altPrimary.toLowerCase() === (person.name || '').toLowerCase() ||
               (altPrimary && title.indexOf(altPrimary) >= 0))) alt = '';
 
-  const nameY = alt ? H / 2 - 17 : H / 2 - 4;
-  x.fillStyle = '#eaf2ff';
-  x.font = "600 27px 'Inter', system-ui, sans-serif";
-  fillClipped(x, person.name, tx, nameY, maxW);
+  // Lay the lines out as a vertically-centred stack against the seal,
+  // so the card breathes whether a figure has 2, 3 or 4 lines.
+  const lines = [{ t: person.name, f: "600 28px 'Inter', system-ui, sans-serif", c: '#eaf2ff', h: 33 }];
+  if (alt) lines.push({ t: alt, f: "600 17px 'Inter', system-ui, sans-serif", c: 'rgba(240,201,78,0.92)', h: 24 });
+  if (title) lines.push({ t: title, f: "19px 'Inter', system-ui, sans-serif", c: '#9fb0d0', h: 25 });
+  if (!person.named) lines.push({ t: '✦ referenced', f: "italic 15px 'Inter', sans-serif", c: 'rgba(240,201,78,0.8)', h: 20 });
 
-  let ty = nameY;
-  if (alt) {
-    x.font = "600 16px 'Inter', system-ui, sans-serif";
-    x.fillStyle = 'rgba(240,201,78,0.92)';
-    fillClipped(x, alt, tx, nameY + 21, maxW);
-    ty = nameY + 21;
-  }
-
-  x.font = "19px 'Inter', system-ui, sans-serif"; x.fillStyle = '#9fb0d0';
-  fillClipped(x, title, tx, ty + 22, maxW);
-  // referenced-but-not-named marker
-  if (!person.named) {
-    x.font = "italic 14px 'Inter', sans-serif"; x.fillStyle = 'rgba(240,201,78,0.8)';
-    fillClipped(x, '✦ referenced', tx, ty + 40, maxW);
+  const totalH = lines.reduce(function (a, l) { return a + l.h; }, 0);
+  let cy = ey - totalH / 2;
+  x.textBaseline = 'top';
+  for (let i = 0; i < lines.length; i++) {
+    x.font = lines[i].f; x.fillStyle = lines[i].c;
+    fillClipped(x, lines[i].t, tx, cy, maxW);
+    cy += lines[i].h;
   }
 
   const t = new THREE.CanvasTexture(c);
@@ -281,12 +276,12 @@ class PQGraphGL {
       // One malformed card must never take down the whole universe.
       let card;
       try { card = cardTexture(p, this.depict); }
-      catch (e) { if (window.console) console.warn('card texture failed for', n.id, e); card = { texture: null, aspect: 2.7 }; }
+      catch (e) { if (window.console) console.warn('card texture failed for', n.id, e); card = { texture: null, aspect: 2.1 }; }
       const mat = new THREE.SpriteMaterial({ map: card.texture, color: card.texture ? 0xffffff : (n.color || 0x9aa6c0), transparent: true, depthWrite: false, depthTest: true });
       const sprite = new THREE.Sprite(mat);
       const P = pos[n.id];
       sprite.position.set(P.x, P.y, P.z);
-      const h = 34, w = h * card.aspect;
+      const h = 44, w = h * card.aspect;
       sprite.scale.set(w, h, 1);
       sprite.userData.id = n.id;
       sprite.renderOrder = 2;
@@ -524,7 +519,7 @@ class PQGraphGL {
     place(focusId, colX[0], 0, 1.5, 7);
     (tiers || []).forEach((list, ti) => {
       const t = ti + 1, N = list.length;
-      const gap = N > 1 ? Math.min(120, rowMax / N) : 120;
+      const gap = N > 1 ? Math.max(62, Math.min(132, rowMax / N)) : 120;
       const k = t === 1 ? 1.18 : t === 2 ? 1.0 : 0.86;
       list.forEach((id, i) => place(id, colX[t], (i - (N - 1) / 2) * gap, k, 6 - ti));
     });
